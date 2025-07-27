@@ -38,7 +38,9 @@ When it is displayed automatically, the menu is sent as its own message before t
 ### Customizing
 
 - Update `openai.api_base` if your LM Studio server is running on a different host or port.
-- Modify `MODEL_NAME`, `CHUNK_SIZE`, or `CHUNK_DELAY` to fit your setup or preferences.
+ - Modify `MODEL_NAME`, `CHUNK_SIZE`, or `CHUNK_DELAY` to fit your setup or preferences.
+ - `MAX_HISTORY_LEN` controls how many messages per peer are kept in memory.
+ - `MAX_WORKERS` limits how many threads can handle messages concurrently.
 
 ## License
 
