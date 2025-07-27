@@ -33,6 +33,7 @@ The program will wait for direct messages on the radio and send back the LLM's r
 - Any other text will be answered by the language model.
 
 The command menu is shown only on your first message to the bot or whenever you send `help`.
+When it is displayed automatically, the menu is sent as its own message before the bot replies to your request.
 
 ### Customizing
 

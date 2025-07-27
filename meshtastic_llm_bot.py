@@ -89,16 +89,16 @@ def handle_message(peer: int, text: str, interface):
             menu_shown.add(peer)
             return
 
-        prefix = ""
         if peer not in menu_shown:
-            prefix = MENU + "\n"
+            print(f"[OUT] To {peer}: {MENU}")
+            send_chunked_text(MENU, peer, interface)
             menu_shown.add(peer)
 
         if lower.startswith("weather"):
             parts = text.split(maxsplit=1)
             location = parts[1] if len(parts) > 1 else DEFAULT_LOCATION
             weather = get_weather(location)
-            reply_text = prefix + weather
+            reply_text = weather
             print(f"[OUT] To {peer}: {reply_text}")
             send_chunked_text(reply_text, peer, interface)
             return
@@ -115,7 +115,6 @@ def handle_message(peer: int, text: str, interface):
 
         record_message(peer, "assistant", reply_text)
 
-        reply_text = prefix + reply_text
         print(f"[OUT] To {peer}: {reply_text}")
 
         send_chunked_text(reply_text, peer, interface)
