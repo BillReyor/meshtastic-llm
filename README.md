@@ -26,6 +26,14 @@ python meshtastic_llm_bot.py
 
 The program will wait for direct messages on the radio and send back the LLM's response in numbered chunks for easy ordering.
 
+### Commands
+
+- `help` – display the list of commands.
+- `weather [location]` – show the current weather using the wttr.in service. If no location is given, a default location is used.
+- Any other text will be answered by the language model.
+
+Every response from the bot begins with this command list for quick reference.
+
 ### Customizing
 
 - Update `openai.api_base` if your LM Studio server is running on a different host or port.
