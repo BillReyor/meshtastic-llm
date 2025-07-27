@@ -32,7 +32,7 @@ The program will wait for direct messages on the radio and send back the LLM's r
 - `weather [location]` – show the current weather using the wttr.in service. If no location is given, a default location is used.
 - Any other text will be answered by the language model.
 
-Every response from the bot begins with this command list for quick reference.
+The command menu is shown only on your first message to the bot or whenever you send `help`.
 
 ### Customizing
 
