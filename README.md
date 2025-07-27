@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python meshtastic_llm_bot.py
 ```
 
-The program will wait for direct messages on the radio and send back the LLM's response in appropriately sized chunks.
+The program will wait for direct messages on the radio and send back the LLM's response in numbered chunks for easy ordering.
 
 ### Customizing
 
