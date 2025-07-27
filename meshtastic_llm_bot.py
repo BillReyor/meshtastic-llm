@@ -31,6 +31,9 @@ MENU = (
     "- anything else: chat with the language model"
 )
 
+# Track which peers have already been shown the menu
+menu_shown = set()
+
 DEFAULT_LOCATION = "San Francisco"
 
 # Maintain per-peer chat histories
@@ -83,13 +86,19 @@ def handle_message(peer: int, text: str, interface):
             reply_text = MENU
             print(f"[OUT] To {peer}: {reply_text}")
             send_chunked_text(reply_text, peer, interface)
+            menu_shown.add(peer)
             return
+
+        prefix = ""
+        if peer not in menu_shown:
+            prefix = MENU + "\n"
+            menu_shown.add(peer)
 
         if lower.startswith("weather"):
             parts = text.split(maxsplit=1)
             location = parts[1] if len(parts) > 1 else DEFAULT_LOCATION
             weather = get_weather(location)
-            reply_text = MENU + "\n" + weather
+            reply_text = prefix + weather
             print(f"[OUT] To {peer}: {reply_text}")
             send_chunked_text(reply_text, peer, interface)
             return
@@ -106,7 +115,7 @@ def handle_message(peer: int, text: str, interface):
 
         record_message(peer, "assistant", reply_text)
 
-        reply_text = MENU + "\n" + reply_text
+        reply_text = prefix + reply_text
         print(f"[OUT] To {peer}: {reply_text}")
 
         send_chunked_text(reply_text, peer, interface)
