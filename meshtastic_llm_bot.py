@@ -26,19 +26,42 @@ CHUNK_DELAY = 0.2
 histories = {}
 history_lock = threading.Lock()
 
-def get_history(peer: int):
+def record_message(peer: int, role: str, content: str):
+    """Append a message to a peer's history and return a copy."""
     with history_lock:
-        if peer not in histories:
-            histories[peer] = [{"role": "system", "content": SYSTEM_PROMPT}]
-        return histories[peer]
+        history = histories.setdefault(peer, [{"role": "system", "content": SYSTEM_PROMPT}])
+        history.append({"role": role, "content": content})
+        return history.copy()
+
 
 def split_into_chunks(text: str, size: int):
     """Split text into chunks of at most `size` characters."""
     return [text[i:i+size] for i in range(0, len(text), size)]
 
+def handle_message(peer: int, text: str, interface):
+    """Generate a reply to `text` from `peer` and send it back."""
+    try:
+        history = record_message(peer, "user", text)
+
+        resp = openai.ChatCompletion.create(
+            model=MODEL_NAME,
+            messages=history,
+            temperature=0.7,
+            max_tokens=500,
+        )
+        reply_text = resp.choices[0].message.content.strip()
+        print(f"[OUT] To {peer}: {reply_text}")
+
+        record_message(peer, "assistant", reply_text)
+
+        for chunk in split_into_chunks(reply_text, CHUNK_SIZE):
+            interface.sendText(chunk, peer)
+            time.sleep(CHUNK_DELAY)
+    except Exception as e:
+        print(f"Error handling message from {peer}: {e}")
+
 def on_receive(packet, interface):
     try:
-        # Only handle direct-to-us text messages
         if packet.get("to") == interface.myInfo.my_node_num:
             peer = packet["from"]
             text = packet.get("decoded", {}).get("text", "").strip()
@@ -47,27 +70,7 @@ def on_receive(packet, interface):
 
             print(f"[IN]  From {peer}: {text}")
 
-            # Build up the conversation history
-            history = get_history(peer)
-            history.append({"role": "user", "content": text})
-
-            # Generate a response via your local LM Studio API
-            resp = openai.ChatCompletion.create(
-                model=MODEL_NAME,
-                messages=history,
-                temperature=0.7,
-                max_tokens=500
-            )
-            reply_text = resp.choices[0].message.content.strip()
-            print(f"[OUT] To {peer}: {reply_text}")
-
-            # Append assistant's reply to history
-            history.append({"role": "assistant", "content": reply_text})
-
-            # Send it back over Meshtastic in chunks
-            for chunk in split_into_chunks(reply_text, CHUNK_SIZE):
-                interface.sendText(chunk, peer)
-                time.sleep(CHUNK_DELAY)
+            threading.Thread(target=handle_message, args=(peer, text, interface), daemon=True).start()
 
     except Exception as e:
         print(f"Error in on_receive: {e}")
