@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import threading
+from concurrent.futures import ThreadPoolExecutor
 import time
 
 import openai
@@ -22,6 +23,10 @@ SYSTEM_PROMPT = (
 CHUNK_SIZE = 100
 # Delay between chunks (seconds)
 CHUNK_DELAY = 0.2
+# Maximum chat history items per peer
+MAX_HISTORY_LEN = 20
+# Maximum number of worker threads
+MAX_WORKERS = 4
 # —— END CONFIG ——
 
 MENU = (
@@ -33,6 +38,7 @@ MENU = (
 
 # Track which peers have already been shown the menu
 menu_shown = set()
+menu_lock = threading.Lock()
 
 DEFAULT_LOCATION = "San Francisco"
 
@@ -40,11 +46,18 @@ DEFAULT_LOCATION = "San Francisco"
 histories = {}
 history_lock = threading.Lock()
 
+# Thread pool for handling incoming messages
+executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+
 def record_message(peer: int, role: str, content: str):
     """Append a message to a peer's history and return a copy."""
     with history_lock:
         history = histories.setdefault(peer, [{"role": "system", "content": SYSTEM_PROMPT}])
         history.append({"role": role, "content": content})
+        # Trim history to the most recent messages
+        if len(history) > MAX_HISTORY_LEN + 1:  # include system prompt
+            histories[peer] = history[-(MAX_HISTORY_LEN + 1):]
+            history = histories[peer]
         return history.copy()
 
 
@@ -86,13 +99,18 @@ def handle_message(peer: int, text: str, interface):
             reply_text = MENU
             print(f"[OUT] To {peer}: {reply_text}")
             send_chunked_text(reply_text, peer, interface)
-            menu_shown.add(peer)
+            with menu_lock:
+                menu_shown.add(peer)
             return
 
-        if peer not in menu_shown:
+        with menu_lock:
+            first_contact = peer not in menu_shown
+            if first_contact:
+                menu_shown.add(peer)
+
+        if first_contact:
             print(f"[OUT] To {peer}: {MENU}")
             send_chunked_text(MENU, peer, interface)
-            menu_shown.add(peer)
 
         if lower.startswith("weather"):
             parts = text.split(maxsplit=1)
@@ -131,7 +149,8 @@ def on_receive(packet, interface):
 
             print(f"[IN]  From {peer}: {text}")
 
-            threading.Thread(target=handle_message, args=(peer, text, interface), daemon=True).start()
+            # Use a thread pool to limit concurrent work and mitigate DoS attacks
+            executor.submit(handle_message, peer, text, interface)
 
     except Exception as e:
         print(f"Error in on_receive: {e}")
@@ -151,6 +170,7 @@ def main():
     except KeyboardInterrupt:
         print("\nStopping bot…")
         interface.close()
+        executor.shutdown(wait=False)
 
 if __name__ == "__main__":
     main()
