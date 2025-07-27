@@ -13,7 +13,7 @@ openai.api_key = "lm-studio"  # or your LM Studio API key
 MODEL_NAME = "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 SYSTEM_PROMPT = (
     "You are an intelligent assistant. "
-    "Always provide well-reasoned answers that are both correct and helpful."
+    "Provide concise, well-reasoned answers that are correct and helpful."
 )
 
 # Maximum characters per Meshtastic message (tweak if needed)
@@ -38,6 +38,18 @@ def split_into_chunks(text: str, size: int):
     """Split text into chunks of at most `size` characters."""
     return [text[i:i+size] for i in range(0, len(text), size)]
 
+
+def send_chunked_text(text: str, peer: int, interface):
+    """Send `text` to `peer` in numbered chunks."""
+    # Reserve space for the " 1/10" suffix when chunking
+    reserved = 6
+    chunks = split_into_chunks(text, CHUNK_SIZE - reserved)
+    total = len(chunks)
+    for i, chunk in enumerate(chunks, start=1):
+        suffix = f" {i}/{total}"
+        interface.sendText(chunk + suffix, peer)
+        time.sleep(CHUNK_DELAY)
+
 def handle_message(peer: int, text: str, interface):
     """Generate a reply to `text` from `peer` and send it back."""
     try:
@@ -54,9 +66,7 @@ def handle_message(peer: int, text: str, interface):
 
         record_message(peer, "assistant", reply_text)
 
-        for chunk in split_into_chunks(reply_text, CHUNK_SIZE):
-            interface.sendText(chunk, peer)
-            time.sleep(CHUNK_DELAY)
+        send_chunked_text(reply_text, peer, interface)
     except Exception as e:
         print(f"Error handling message from {peer}: {e}")
 
