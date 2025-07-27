@@ -5,6 +5,8 @@ import time
 import openai
 from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
+import requests
+from urllib.parse import quote_plus
 
 # —— CONFIG ——
 openai.api_base = "http://localhost:1234/v1"
@@ -21,6 +23,15 @@ CHUNK_SIZE = 100
 # Delay between chunks (seconds)
 CHUNK_DELAY = 0.2
 # —— END CONFIG ——
+
+MENU = (
+    "Commands:\n"
+    "- help: show this message\n"
+    "- weather [location]: current weather\n"
+    "- anything else: chat with the language model"
+)
+
+DEFAULT_LOCATION = "San Francisco"
 
 # Maintain per-peer chat histories
 histories = {}
@@ -50,9 +61,39 @@ def send_chunked_text(text: str, peer: int, interface):
         interface.sendText(chunk + suffix, peer)
         time.sleep(CHUNK_DELAY)
 
+
+def get_weather(location: str = "") -> str:
+    """Fetch current weather for `location` using wttr.in."""
+    try:
+        loc = quote_plus(location) if location else ""
+        url = f"https://wttr.in/{loc}?format=3"
+        resp = requests.get(url, timeout=5)
+        if resp.status_code == 200:
+            return resp.text.strip()
+    except Exception as e:
+        return f"Error retrieving weather: {e}"
+    return "Unable to retrieve weather information."
+
 def handle_message(peer: int, text: str, interface):
     """Generate a reply to `text` from `peer` and send it back."""
     try:
+        lower = text.lower()
+
+        if lower == "help":
+            reply_text = MENU
+            print(f"[OUT] To {peer}: {reply_text}")
+            send_chunked_text(reply_text, peer, interface)
+            return
+
+        if lower.startswith("weather"):
+            parts = text.split(maxsplit=1)
+            location = parts[1] if len(parts) > 1 else DEFAULT_LOCATION
+            weather = get_weather(location)
+            reply_text = MENU + "\n" + weather
+            print(f"[OUT] To {peer}: {reply_text}")
+            send_chunked_text(reply_text, peer, interface)
+            return
+
         history = record_message(peer, "user", text)
 
         resp = openai.ChatCompletion.create(
@@ -62,9 +103,11 @@ def handle_message(peer: int, text: str, interface):
             max_tokens=500,
         )
         reply_text = resp.choices[0].message.content.strip()
-        print(f"[OUT] To {peer}: {reply_text}")
 
         record_message(peer, "assistant", reply_text)
+
+        reply_text = MENU + "\n" + reply_text
+        print(f"[OUT] To {peer}: {reply_text}")
 
         send_chunked_text(reply_text, peer, interface)
     except Exception as e:
