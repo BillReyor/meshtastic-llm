@@ -1,6 +1,6 @@
 # Meshtastic LLM Bot
 
-This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and messages on the `Emerald` channel, replying with completions from the selected model and occasionally posting a joke to the channel.
+This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and messages on the `Emerald` channel, replying with completions from the selected model and occasionally posting a hacker-themed note to the channel.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python meshtastic_llm_bot.py
 ```
 
-The program will wait for direct messages and messages on the `Emerald` channel, sending back the LLM's response in numbered chunks for easy ordering. Every so often it also broadcasts a random joke to `Emerald` for users to reply to.
+The program will wait for direct messages and messages on the `Emerald` channel, sending back the LLM's response in numbered chunks for easy ordering. Every so often it also broadcasts a random hacker message about EmeraldCon for users to reply to.
 
 ### Commands
 
