@@ -42,9 +42,6 @@ MENU = (
     "- anything else: chat with the language model"
 )
 
-# Track which peers have already been shown the menu
-menu_shown = set()
-menu_lock = threading.Lock()
 
 DEFAULT_LOCATION = "San Francisco"
 
@@ -74,16 +71,13 @@ def split_into_chunks(text: str, size: int):
 
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
-    """Send `text` to `target` (peer or channel) in numbered chunks."""
-    reserved = 6  # Reserve space for the " 1/10" suffix when chunking
-    chunks = split_into_chunks(text, CHUNK_SIZE - reserved)
-    total = len(chunks)
-    for i, chunk in enumerate(chunks, start=1):
-        suffix = f" {i}/{total}"
+    """Send `text` to `target` (peer or channel) in chunks without numbering."""
+    chunks = split_into_chunks(text, CHUNK_SIZE)
+    for chunk in chunks:
         if channel:
-            interface.sendText(chunk + suffix, channelIndex=target)
+            interface.sendText(chunk, channelIndex=target)
         else:
-            interface.sendText(chunk + suffix, target)
+            interface.sendText(chunk, target)
         time.sleep(CHUNK_DELAY)
 
 
@@ -132,18 +126,7 @@ def handle_message(target: int, text: str, interface, is_channel: bool = False):
             reply_text = MENU
             print(f"[OUT] To {target}: {reply_text}")
             send_chunked_text(reply_text, target, interface, channel=is_channel)
-            with menu_lock:
-                menu_shown.add(target)
             return
-
-        with menu_lock:
-            first_contact = target not in menu_shown
-            if first_contact:
-                menu_shown.add(target)
-
-        if first_contact:
-            print(f"[OUT] To {target}: {MENU}")
-            send_chunked_text(MENU, target, interface, channel=is_channel)
 
         if lower.startswith("weather"):
             parts = text.split(maxsplit=1)
