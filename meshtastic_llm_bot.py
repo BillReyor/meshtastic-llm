@@ -25,7 +25,9 @@ CHUNK_DELAY = 0.2
 MAX_HISTORY_LEN = 20
 # Maximum number of worker threads
 MAX_WORKERS = 4
-# Channel to listen and occasionally post hacker messages on
+# Channel index to listen and occasionally post hacker messages on
+EMERALD_CHANNEL_INDEX = 3
+# Human-readable name for the channel
 EMERALD_CHANNEL_NAME = "Emerald"
 # How often to post a hacker message to the Emerald channel (seconds)
 HACKER_INTERVAL = 3600
@@ -201,18 +203,6 @@ def on_receive(packet, interface):
 # Subscribe to receive events
 pub.subscribe(on_receive, "meshtastic.receive")
 
-
-def find_channel_index(interface, name: str):
-    try:
-        for i, ch in enumerate(interface.radioConfig.channels):
-            ch_name = getattr(ch.settings, "name", "")
-            if ch_name and ch_name.lower() == name.lower():
-                return i
-    except Exception:
-        pass
-    return None
-
-
 def hacker_sender(interface):
     while True:
         time.sleep(HACKER_INTERVAL)
@@ -224,11 +214,13 @@ def hacker_sender(interface):
 def main():
     global emerald_channel
     interface = SerialInterface()  # Connect to your first Meshtastic device
-    emerald_channel = find_channel_index(interface, EMERALD_CHANNEL_NAME)
+    emerald_channel = EMERALD_CHANNEL_INDEX
 
     threading.Thread(target=hacker_sender, args=(interface,), daemon=True).start()
 
-    print("Meshtastic ↔️ LLM bot running. Listening for DMs and Emerald channel…")
+    print(
+        f"Meshtastic ↔️ LLM bot running. Listening for DMs and channel {EMERALD_CHANNEL_INDEX} ({EMERALD_CHANNEL_NAME})…"
+    )
     try:
         while True:
             time.sleep(1)

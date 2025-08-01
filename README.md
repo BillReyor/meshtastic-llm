@@ -1,6 +1,6 @@
 # Meshtastic LLM Bot
 
-This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and messages on the `Emerald` channel, replying with completions from the selected model and occasionally posting a hacker-themed note to the channel.
+This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and messages on channel 3 (the `Emerald` channel), replying with completions from the selected model and occasionally posting a hacker-themed note to the channel.
 
 ## Requirements
 
@@ -24,7 +24,7 @@ pip install -r requirements.txt
 python meshtastic_llm_bot.py
 ```
 
-The program will wait for direct messages and messages on the `Emerald` channel, sending back the LLM's response in numbered chunks for easy ordering. Every so often it also broadcasts a random hacker message about EmeraldCon for users to reply to.
+The program will wait for direct messages and messages on channel 3 (`Emerald`), sending back the LLM's response in numbered chunks for easy ordering. Every so often it also broadcasts a random hacker message about EmeraldCon for users to reply to.
 
 ### Commands
 
@@ -37,7 +37,8 @@ When it is displayed automatically, the menu is sent as its own message before t
 
 ### Customizing
 
-- Update `API_BASE` if your LM Studio server is running on a different host or port.
+ - Update `API_BASE` if your LM Studio server is running on a different host or port.
+ - Change `EMERALD_CHANNEL_INDEX` if the Emerald channel uses a different slot.
  - Modify `MODEL_NAME`, `CHUNK_SIZE`, or `CHUNK_DELAY` to fit your setup or preferences.
  - `MAX_HISTORY_LEN` controls how many messages per peer are kept in memory.
  - `MAX_WORKERS` limits how many threads can handle messages concurrently.
