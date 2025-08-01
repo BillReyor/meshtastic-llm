@@ -1,4 +1,3 @@
 meshtastic
-openai
 pypubsub
 requests

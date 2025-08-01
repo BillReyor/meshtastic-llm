@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
+import random
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import time
 
-import openai
 from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
 import requests
 from urllib.parse import quote_plus
 
 # —— CONFIG ——
-openai.api_base = "http://localhost:1234/v1"
-openai.api_key = "lm-studio"  # or your LM Studio API key
-
+API_BASE = "http://localhost:1234/v1"
+API_KEY = "lm-studio"  # or your LM Studio API key
 MODEL_NAME = "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 SYSTEM_PROMPT = (
     "You are an intelligent assistant. "
@@ -27,6 +26,15 @@ CHUNK_DELAY = 0.2
 MAX_HISTORY_LEN = 20
 # Maximum number of worker threads
 MAX_WORKERS = 4
+# Channel to listen and occasionally post jokes on
+EMERALD_CHANNEL_NAME = "Emerald"
+# How often to post a joke to the Emerald channel (seconds)
+JOKE_INTERVAL = 3600
+JOKES = [
+    "Why did the mesh node get promoted? It had great connections!",
+    "I tried to tell a joke over Meshtastic… but it got lost in the ether.",
+    "Radio gossip travels fast—it's all over the mesh!",
+]
 # —— END CONFIG ——
 
 MENU = (
@@ -48,6 +56,7 @@ history_lock = threading.Lock()
 
 # Thread pool for handling incoming messages
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+emerald_channel = None
 
 def record_message(peer: int, role: str, content: str):
     """Append a message to a peer's history and return a copy."""
@@ -66,15 +75,17 @@ def split_into_chunks(text: str, size: int):
     return [text[i:i+size] for i in range(0, len(text), size)]
 
 
-def send_chunked_text(text: str, peer: int, interface):
-    """Send `text` to `peer` in numbered chunks."""
-    # Reserve space for the " 1/10" suffix when chunking
-    reserved = 6
+def send_chunked_text(text: str, target: int, interface, channel: bool = False):
+    """Send `text` to `target` (peer or channel) in numbered chunks."""
+    reserved = 6  # Reserve space for the " 1/10" suffix when chunking
     chunks = split_into_chunks(text, CHUNK_SIZE - reserved)
     total = len(chunks)
     for i, chunk in enumerate(chunks, start=1):
         suffix = f" {i}/{total}"
-        interface.sendText(chunk + suffix, peer)
+        if channel:
+            interface.sendText(chunk + suffix, channelIndex=target)
+        else:
+            interface.sendText(chunk + suffix, target)
         time.sleep(CHUNK_DELAY)
 
 
@@ -90,87 +101,119 @@ def get_weather(location: str = "") -> str:
         return f"Error retrieving weather: {e}"
     return "Unable to retrieve weather information."
 
-def handle_message(peer: int, text: str, interface):
-    """Generate a reply to `text` from `peer` and send it back."""
+def handle_message(target: int, text: str, interface, is_channel: bool = False):
+    """Generate a reply to `text` and send it back to `target`."""
     try:
         lower = text.lower()
 
         if lower == "help":
             reply_text = MENU
-            print(f"[OUT] To {peer}: {reply_text}")
-            send_chunked_text(reply_text, peer, interface)
+            print(f"[OUT] To {target}: {reply_text}")
+            send_chunked_text(reply_text, target, interface, channel=is_channel)
             with menu_lock:
-                menu_shown.add(peer)
+                menu_shown.add(target)
             return
 
         with menu_lock:
-            first_contact = peer not in menu_shown
+            first_contact = target not in menu_shown
             if first_contact:
-                menu_shown.add(peer)
+                menu_shown.add(target)
 
         if first_contact:
-            print(f"[OUT] To {peer}: {MENU}")
-            send_chunked_text(MENU, peer, interface)
+            print(f"[OUT] To {target}: {MENU}")
+            send_chunked_text(MENU, target, interface, channel=is_channel)
 
         if lower.startswith("weather"):
             parts = text.split(maxsplit=1)
             location = parts[1] if len(parts) > 1 else DEFAULT_LOCATION
             weather = get_weather(location)
             reply_text = weather
-            print(f"[OUT] To {peer}: {reply_text}")
-            send_chunked_text(reply_text, peer, interface)
+            print(f"[OUT] To {target}: {reply_text}")
+            send_chunked_text(reply_text, target, interface, channel=is_channel)
             return
 
-        history = record_message(peer, "user", text)
+        history = record_message(target, "user", text)
 
-        resp = openai.ChatCompletion.create(
-            model=MODEL_NAME,
-            messages=history,
-            temperature=0.7,
-            max_tokens=500,
-        )
-        reply_text = resp.choices[0].message.content.strip()
+        url = f"{API_BASE}/chat/completions"
+        headers = {"Authorization": f"Bearer {API_KEY}"}
+        payload = {
+            "model": MODEL_NAME,
+            "messages": history,
+            "temperature": 0.7,
+            "max_tokens": 500,
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        reply_text = resp.json()["choices"][0]["message"]["content"].strip()
 
-        record_message(peer, "assistant", reply_text)
+        record_message(target, "assistant", reply_text)
 
-        print(f"[OUT] To {peer}: {reply_text}")
+        print(f"[OUT] To {target}: {reply_text}")
 
-        send_chunked_text(reply_text, peer, interface)
+        send_chunked_text(reply_text, target, interface, channel=is_channel)
     except Exception as e:
-        print(f"Error handling message from {peer}: {e}")
+        print(f"Error handling message for {target}: {e}")
 
 def on_receive(packet, interface):
     try:
-        if packet.get("to") == interface.myInfo.my_node_num:
-            peer = packet["from"]
-            text = packet.get("decoded", {}).get("text", "").strip()
-            if not text:
-                return
+        channel = packet.get("channel")
+        to = packet.get("to")
+        text = packet.get("decoded", {}).get("text", "").strip()
+        if not text:
+            return
 
-            print(f"[IN]  From {peer}: {text}")
+        is_dm = to == interface.myInfo.my_node_num
+        is_emerald = channel == emerald_channel
+        if not (is_dm or is_emerald):
+            return
 
-            # Use a thread pool to limit concurrent work and mitigate DoS attacks
-            executor.submit(handle_message, peer, text, interface)
+        source = packet.get("from")
+        target = source if is_dm else channel
+        print(f"[IN]  From {source}: {text}")
+
+        executor.submit(handle_message, target, text, interface, not is_dm)
 
     except Exception as e:
         print(f"Error in on_receive: {e}")
 
+
 # Subscribe to receive events
 pub.subscribe(on_receive, "meshtastic.receive")
 
-def main():
-    # Connect to your first Meshtastic device
-    interface = SerialInterface()
 
-    print("Meshtastic ↔️ LLM bot running. Waiting for DMs…")
+def find_channel_index(interface, name: str):
     try:
-        # Keep the script alive so pubsub callbacks fire
+        for i, ch in enumerate(interface.radioConfig.channels):
+            if ch.settings.name == name:
+                return i
+    except Exception:
+        pass
+    return None
+
+
+def joke_sender(interface):
+    while True:
+        time.sleep(JOKE_INTERVAL)
+        if emerald_channel is not None:
+            joke = random.choice(JOKES)
+            send_chunked_text(joke, emerald_channel, interface, channel=True)
+
+
+def main():
+    global emerald_channel
+    interface = SerialInterface()  # Connect to your first Meshtastic device
+    emerald_channel = find_channel_index(interface, EMERALD_CHANNEL_NAME)
+
+    threading.Thread(target=joke_sender, args=(interface,), daemon=True).start()
+
+    print("Meshtastic ↔️ LLM bot running. Listening for DMs and Emerald channel…")
+    try:
         while True:
             time.sleep(1)
     except KeyboardInterrupt:
         print("\nStopping bot…")
         interface.close()
         executor.shutdown(wait=False)
+
 
 if __name__ == "__main__":
     main()
