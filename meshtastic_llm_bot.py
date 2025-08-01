@@ -28,8 +28,10 @@ SYSTEM_PROMPT = (
 CHUNK_BYTES = 200
 # Channel messages have a bit less room, so use a smaller chunk size
 CHANNEL_CHUNK_BYTES = 180
-# Delay between chunks (seconds)
-CHUNK_DELAY = 1
+# Delay before sending each subsequent chunk (seconds)
+CHUNK_DELAY = 3
+# Delay before retrying a chunk due to missing ACK (seconds)
+RETRY_DELAY = 1
 # Maximum chat history items per peer
 MAX_HISTORY_LEN = 20
 # Maximum number of worker threads
@@ -86,33 +88,32 @@ def record_message(peer: int, role: str, content: str):
 
 
 def split_into_chunks(text: str, size: int, reserve: int = 0):
-    """Split text into chunks of at most `size` UTF-8 bytes.
+    """Yield chunks of `text` containing at most `size` UTF-8 bytes.
 
     `reserve` bytes are left in each chunk for optional prefixes.
     """
     max_bytes = max(1, size - reserve)
-    chunks = []
-    current = ""
+    current = []
     current_bytes = 0
     for ch in text:
         ch_bytes = len(ch.encode("utf-8"))
         if current_bytes + ch_bytes > max_bytes:
-            chunks.append(current)
-            current = ch
+            yield "".join(current)
+            current = [ch]
             current_bytes = ch_bytes
         else:
-            current += ch
+            current.append(ch)
             current_bytes += ch_bytes
     if current:
-        chunks.append(current)
-    return chunks
+        yield "".join(current)
 
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
     """Send `text` to `target` (peer or channel) in chunks."""
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    chunks = split_into_chunks(text, size)
-    for chunk in chunks:
+    for i, chunk in enumerate(split_into_chunks(text, size)):
+        if i:
+            time.sleep(CHUNK_DELAY)
         payload = chunk
         if channel:
             # Broadcast messages don't receive ACKs, so disable them to prevent
@@ -129,9 +130,8 @@ def send_chunked_text(text: str, target: int, interface, channel: bool = False):
                     if attempt == 2:
                         print(f"Warning: no ACK after 3 attempts: {e}")
                     else:
-                        time.sleep(CHUNK_DELAY)
+                        time.sleep(RETRY_DELAY)
                         continue
-        time.sleep(CHUNK_DELAY)
 
 
 def get_weather(location: str = "") -> str:
