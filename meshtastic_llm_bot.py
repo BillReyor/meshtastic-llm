@@ -31,6 +31,8 @@ SYSTEM_PROMPT = (
 
 CHUNK_BYTES = 200              # DM payload size
 CHANNEL_CHUNK_BYTES = 180       # Channel payload size
+DELAY_MIN = 3                  # Minimum seconds between message chunks
+DELAY_MAX = 5                  # Maximum seconds between message chunks
 RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
 MAX_WORKERS = 4
@@ -108,10 +110,10 @@ def split_into_chunks(text: str, size: int):
 
 def send_chunked_text(text: str, target: int, iface, channel=False):
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    time.sleep(random.uniform(1, 2))
+    time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
     for i, chunk in enumerate(split_into_chunks(text, size)):
         if i:
-            time.sleep(random.uniform(1, 2))
+            time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
         if channel:
             iface.sendText(chunk, channelIndex=target, wantAck=False)
         else:
