@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import random
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -26,15 +25,10 @@ CHUNK_DELAY = 0.2
 MAX_HISTORY_LEN = 20
 # Maximum number of worker threads
 MAX_WORKERS = 4
-# Channel to listen and occasionally post jokes on
+# Channel to listen and occasionally post hacker messages on
 EMERALD_CHANNEL_NAME = "Emerald"
-# How often to post a joke to the Emerald channel (seconds)
-JOKE_INTERVAL = 3600
-JOKES = [
-    "Why did the mesh node get promoted? It had great connections!",
-    "I tried to tell a joke over Meshtastic… but it got lost in the ether.",
-    "Radio gossip travels fast—it's all over the mesh!",
-]
+# How often to post a hacker message to the Emerald channel (seconds)
+HACKER_INTERVAL = 3600
 # —— END CONFIG ——
 
 MENU = (
@@ -101,6 +95,30 @@ def get_weather(location: str = "") -> str:
         return f"Error retrieving weather: {e}"
     return "Unable to retrieve weather information."
 
+
+def generate_hacker_message() -> str:
+    """Use the LLM to craft a short hacker-style note about EmeraldCon."""
+    try:
+        prompt = (
+            "Share a brief, playful hacker-style message about EmeraldCon "
+            "at the Hackers on Planet Earth conference in NYC."
+        )
+        url = f"{API_BASE}/chat/completions"
+        headers = {"Authorization": f"Bearer {API_KEY}"}
+        payload = {
+            "model": MODEL_NAME,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            "temperature": 1.0,
+            "max_tokens": 60,
+        }
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    except Exception as e:
+        return f"Error generating hacker message: {e}"
+
 def handle_message(target: int, text: str, interface, is_channel: bool = False):
     """Generate a reply to `text` and send it back to `target`."""
     try:
@@ -156,17 +174,21 @@ def handle_message(target: int, text: str, interface, is_channel: bool = False):
 def on_receive(packet, interface):
     try:
         channel = packet.get("channel")
+        if channel is None:
+            channel = packet.get("channelIndex") or packet.get("channel_index")
         to = packet.get("to")
         text = packet.get("decoded", {}).get("text", "").strip()
         if not text:
             return
 
         is_dm = to == interface.myInfo.my_node_num
-        is_emerald = channel == emerald_channel
+        is_emerald = emerald_channel is not None and channel == emerald_channel
         if not (is_dm or is_emerald):
             return
 
         source = packet.get("from")
+        if source == interface.myInfo.my_node_num:
+            return
         target = source if is_dm else channel
         print(f"[IN]  From {source}: {text}")
 
@@ -183,19 +205,20 @@ pub.subscribe(on_receive, "meshtastic.receive")
 def find_channel_index(interface, name: str):
     try:
         for i, ch in enumerate(interface.radioConfig.channels):
-            if ch.settings.name == name:
+            ch_name = getattr(ch.settings, "name", "")
+            if ch_name and ch_name.lower() == name.lower():
                 return i
     except Exception:
         pass
     return None
 
 
-def joke_sender(interface):
+def hacker_sender(interface):
     while True:
-        time.sleep(JOKE_INTERVAL)
+        time.sleep(HACKER_INTERVAL)
         if emerald_channel is not None:
-            joke = random.choice(JOKES)
-            send_chunked_text(joke, emerald_channel, interface, channel=True)
+            message = generate_hacker_message()
+            send_chunked_text(message, emerald_channel, interface, channel=True)
 
 
 def main():
@@ -203,7 +226,7 @@ def main():
     interface = SerialInterface()  # Connect to your first Meshtastic device
     emerald_channel = find_channel_index(interface, EMERALD_CHANNEL_NAME)
 
-    threading.Thread(target=joke_sender, args=(interface,), daemon=True).start()
+    threading.Thread(target=hacker_sender, args=(interface,), daemon=True).start()
 
     print("Meshtastic ↔️ LLM bot running. Listening for DMs and Emerald channel…")
     try:
