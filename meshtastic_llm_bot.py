@@ -21,9 +21,9 @@ SYSTEM_PROMPT = (
 
 # Maximum UTF-8 bytes per Meshtastic message (firmware limit ~240)
 # use a slightly smaller size to be safe
-CHUNK_BYTES = 228
+CHUNK_BYTES = 200
 # Delay between chunks (seconds)
-CHUNK_DELAY = 0.2
+CHUNK_DELAY = 1
 # Maximum chat history items per peer
 MAX_HISTORY_LEN = 20
 # Maximum number of worker threads
