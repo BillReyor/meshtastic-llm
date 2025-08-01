@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import datetime
 import os
+import random
 import re
 import threading
 import time
@@ -30,7 +31,6 @@ SYSTEM_PROMPT = (
 
 CHUNK_BYTES = 200              # DM payload size
 CHANNEL_CHUNK_BYTES = 180       # Channel payload size
-CHUNK_DELAY = 3                 # Seconds between chunks
 RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
 MAX_WORKERS = 4
@@ -48,6 +48,10 @@ MENU = (
     "- anything else: chat with the language model"
 )
 DEFAULT_LOCATION = "San Francisco"
+# Greetings
+HELLO_MESSAGES = ["Yo.", "Hey all.", "Smudge here."]
+GREET_INTERVAL = 4 * 3600      # base interval between greetings
+GREET_JITTER = 900             # ±15 minutes in seconds
 # ─── END CONFIG ────────────────────────────────────────────────────────────────
 
 
@@ -86,12 +90,15 @@ def record_message(peer: int, role: str, content: str):
 
 
 def split_into_chunks(text: str, size: int):
+    min_size = min(40, size)
     current, cur_bytes = [], 0
+    threshold = random.randint(min_size, size)
     for ch in text:
         b = len(ch.encode("utf-8"))
-        if cur_bytes + b > size:
+        if cur_bytes + b > threshold:
             yield "".join(current)
             current, cur_bytes = [ch], b
+            threshold = random.randint(min_size, size)
         else:
             current.append(ch)
             cur_bytes += b
@@ -101,9 +108,10 @@ def split_into_chunks(text: str, size: int):
 
 def send_chunked_text(text: str, target: int, iface, channel=False):
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
+    time.sleep(random.uniform(1, 2))
     for i, chunk in enumerate(split_into_chunks(text, size)):
         if i:
-            time.sleep(CHUNK_DELAY)
+            time.sleep(random.uniform(1, 2))
         if channel:
             iface.sendText(chunk, channelIndex=target, wantAck=False)
         else:
@@ -219,6 +227,15 @@ def on_receive(packet=None, interface=None, **kwargs):
         print(f"Error in on_receive: {e}")
 
 
+def greeting_loop(iface):
+    while True:
+        delay = GREET_INTERVAL + random.uniform(-GREET_JITTER, GREET_JITTER)
+        time.sleep(max(0, delay))
+        msg = random.choice(HELLO_MESSAGES)
+        log_message("OUT", emerald_channel, msg, channel=True)
+        send_chunked_text(msg, emerald_channel, iface, channel=True)
+
+
 # ─── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
     global emerald_channel
@@ -227,6 +244,12 @@ def main():
 
     pub.subscribe(on_receive, "meshtastic.receive")
     print(f"Meshtastic ↔️ Smudge ready. DMs or channel {EMERALD_CHANNEL_INDEX} ({EMERALD_CHANNEL_NAME})")
+
+    # initial hello
+    hello = random.choice(HELLO_MESSAGES)
+    log_message("OUT", EMERALD_CHANNEL_INDEX, hello, channel=True)
+    send_chunked_text(hello, EMERALD_CHANNEL_INDEX, iface, channel=True)
+    threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
 
     try:
         while True:
