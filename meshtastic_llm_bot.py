@@ -88,7 +88,7 @@ def record_message(peer: int, role: str, content: str):
 def split_into_chunks(text: str, size: int, reserve: int = 0):
     """Split text into chunks of at most `size` UTF-8 bytes.
 
-    `reserve` bytes are left in each chunk for prefixes such as chunk numbers.
+    `reserve` bytes are left in each chunk for optional prefixes.
     """
     max_bytes = max(1, size - reserve)
     chunks = []
@@ -109,27 +109,28 @@ def split_into_chunks(text: str, size: int, reserve: int = 0):
 
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
-    """Send `text` to `target` (peer or channel) in numbered chunks."""
+    """Send `text` to `target` (peer or channel) in chunks."""
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    chunks = split_into_chunks(text, size, reserve=10)
-    total = len(chunks)
-    for i, chunk in enumerate(chunks, 1):
-        prefix = f"{i}/{total} " if total > 1 else ""
-        payload = f"{prefix}{chunk}"
+    chunks = split_into_chunks(text, size)
+    for chunk in chunks:
+        payload = chunk
         if channel:
             # Broadcast messages don't receive ACKs, so disable them to prevent
             # the send queue from stalling and dropping later chunks.
             interface.sendText(payload, channelIndex=target, wantAck=False)
         else:
-            interface.sendText(payload, target, wantAck=True)
-            # Wait for the device to acknowledge each chunk before
-            # sending the next to avoid losing intermediate chunks. If the
-            # ACK doesn't arrive in time, log a warning but continue sending
-            # remaining chunks so the message isn't truncated.
-            try:
-                interface.waitForAckNak()
-            except Exception as e:  # pragma: no cover - best effort logging
-                print(f"Warning: no ACK for chunk {i}/{total}: {e}")
+            # Retry a few times if we don't get an ACK before moving on.
+            for attempt in range(3):
+                interface.sendText(payload, target, wantAck=True)
+                try:
+                    interface.waitForAckNak()
+                    break
+                except Exception as e:  # pragma: no cover - best effort logging
+                    if attempt == 2:
+                        print(f"Warning: no ACK after 3 attempts: {e}")
+                    else:
+                        time.sleep(CHUNK_DELAY)
+                        continue
         time.sleep(CHUNK_DELAY)
 
 
