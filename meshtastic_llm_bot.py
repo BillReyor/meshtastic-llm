@@ -93,7 +93,9 @@ def send_chunked_text(text: str, target: int, interface, channel: bool = False):
     chunks = split_into_chunks(text, size)
     for chunk in chunks:
         if channel:
-            interface.sendText(chunk, channelIndex=target)
+            # Broadcast messages don't receive ACKs, so disable them to prevent
+            # the send queue from stalling and dropping later chunks.
+            interface.sendText(chunk, channelIndex=target, wantAck=False)
         else:
             interface.sendText(chunk, target)
         time.sleep(CHUNK_DELAY)
