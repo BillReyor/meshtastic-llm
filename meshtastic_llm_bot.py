@@ -22,6 +22,8 @@ SYSTEM_PROMPT = (
 # Maximum UTF-8 bytes per Meshtastic message (firmware limit ~240)
 # use a slightly smaller size to be safe
 CHUNK_BYTES = 200
+# Channel messages have a bit less room, so use a smaller chunk size
+CHANNEL_CHUNK_BYTES = 180
 # Delay between chunks (seconds)
 CHUNK_DELAY = 1
 # Maximum chat history items per peer
@@ -87,7 +89,8 @@ def split_into_chunks(text: str, size: int):
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
     """Send `text` to `target` (peer or channel) in chunks without numbering."""
-    chunks = split_into_chunks(text, CHUNK_BYTES)
+    size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
+    chunks = split_into_chunks(text, size)
     for chunk in chunks:
         if channel:
             interface.sendText(chunk, channelIndex=target)
