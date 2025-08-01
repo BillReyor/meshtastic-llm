@@ -19,8 +19,9 @@ SYSTEM_PROMPT = (
     "Keep it real and keep it rough."
 )
 
-# Maximum characters per Meshtastic message (tweak if needed)
-CHUNK_SIZE = 100
+# Maximum UTF-8 bytes per Meshtastic message (firmware limit ~240)
+# use a slightly smaller size to be safe
+CHUNK_BYTES = 228
 # Delay between chunks (seconds)
 CHUNK_DELAY = 0.2
 # Maximum chat history items per peer
@@ -66,13 +67,27 @@ def record_message(peer: int, role: str, content: str):
 
 
 def split_into_chunks(text: str, size: int):
-    """Split text into chunks of at most `size` characters."""
-    return [text[i:i+size] for i in range(0, len(text), size)]
+    """Split text into chunks of at most `size` UTF-8 bytes."""
+    chunks = []
+    current = ""
+    current_bytes = 0
+    for ch in text:
+        ch_bytes = len(ch.encode("utf-8"))
+        if current_bytes + ch_bytes > size:
+            chunks.append(current)
+            current = ch
+            current_bytes = ch_bytes
+        else:
+            current += ch
+            current_bytes += ch_bytes
+    if current:
+        chunks.append(current)
+    return chunks
 
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
     """Send `text` to `target` (peer or channel) in chunks without numbering."""
-    chunks = split_into_chunks(text, CHUNK_SIZE)
+    chunks = split_into_chunks(text, CHUNK_BYTES)
     for chunk in chunks:
         if channel:
             interface.sendText(chunk, channelIndex=target)
