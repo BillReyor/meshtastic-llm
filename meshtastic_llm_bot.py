@@ -123,8 +123,13 @@ def send_chunked_text(text: str, target: int, interface, channel: bool = False):
         else:
             interface.sendText(payload, target, wantAck=True)
             # Wait for the device to acknowledge each chunk before
-            # sending the next to avoid losing intermediate chunks.
-            interface.waitForAckNak()
+            # sending the next to avoid losing intermediate chunks. If the
+            # ACK doesn't arrive in time, log a warning but continue sending
+            # remaining chunks so the message isn't truncated.
+            try:
+                interface.waitForAckNak()
+            except Exception as e:  # pragma: no cover - best effort logging
+                print(f"Warning: no ACK for chunk {i}/{total}: {e}")
         time.sleep(CHUNK_DELAY)
 
 
