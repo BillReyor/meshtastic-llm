@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import datetime
+import os
 import threading
 from concurrent.futures import ThreadPoolExecutor
 import time
@@ -36,6 +38,8 @@ EMERALD_CHANNEL_INDEX = 3
 EMERALD_CHANNEL_NAME = "Emerald"
 # How often to post a hacker message to the Emerald channel (seconds)
 HACKER_INTERVAL = 3600
+# Directory to store message audit logs
+LOG_DIR = "logs"
 # —— END CONFIG ——
 
 MENU = (
@@ -56,6 +60,17 @@ history_lock = threading.Lock()
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
 emerald_channel = None
 
+
+def log_message(direction: str, target: int, message: str, channel: bool = False):
+    """Write a line to the daily audit log."""
+    date_str = datetime.date.today().isoformat()
+    os.makedirs(LOG_DIR, exist_ok=True)
+    logfile = os.path.join(LOG_DIR, f"{date_str}.log")
+    with open(logfile, "a", encoding="utf-8") as f:
+        timestamp = datetime.datetime.now().isoformat()
+        kind = "channel" if channel else "peer"
+        f.write(f"{timestamp}\t{direction}\t{kind}:{target}\t{message}\n")
+
 def record_message(peer: int, role: str, content: str):
     """Append a message to a peer's history and return a copy."""
     with history_lock:
@@ -68,14 +83,18 @@ def record_message(peer: int, role: str, content: str):
         return history.copy()
 
 
-def split_into_chunks(text: str, size: int):
-    """Split text into chunks of at most `size` UTF-8 bytes."""
+def split_into_chunks(text: str, size: int, reserve: int = 0):
+    """Split text into chunks of at most `size` UTF-8 bytes.
+
+    `reserve` bytes are left in each chunk for prefixes such as chunk numbers.
+    """
+    max_bytes = max(1, size - reserve)
     chunks = []
     current = ""
     current_bytes = 0
     for ch in text:
         ch_bytes = len(ch.encode("utf-8"))
-        if current_bytes + ch_bytes > size:
+        if current_bytes + ch_bytes > max_bytes:
             chunks.append(current)
             current = ch
             current_bytes = ch_bytes
@@ -88,16 +107,19 @@ def split_into_chunks(text: str, size: int):
 
 
 def send_chunked_text(text: str, target: int, interface, channel: bool = False):
-    """Send `text` to `target` (peer or channel) in chunks without numbering."""
+    """Send `text` to `target` (peer or channel) in numbered chunks."""
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    chunks = split_into_chunks(text, size)
-    for chunk in chunks:
+    chunks = split_into_chunks(text, size, reserve=10)
+    total = len(chunks)
+    for i, chunk in enumerate(chunks, 1):
+        prefix = f"{i}/{total} " if total > 1 else ""
+        payload = f"{prefix}{chunk}"
         if channel:
             # Broadcast messages don't receive ACKs, so disable them to prevent
             # the send queue from stalling and dropping later chunks.
-            interface.sendText(chunk, channelIndex=target, wantAck=False)
+            interface.sendText(payload, channelIndex=target, wantAck=False)
         else:
-            interface.sendText(chunk, target)
+            interface.sendText(payload, target, wantAck=True)
         time.sleep(CHUNK_DELAY)
 
 
@@ -145,6 +167,7 @@ def handle_message(target: int, text: str, interface, is_channel: bool = False):
         if lower == "help":
             reply_text = MENU
             print(f"[OUT] To {target}: {reply_text}")
+            log_message("OUT", target, reply_text, channel=is_channel)
             send_chunked_text(reply_text, target, interface, channel=is_channel)
             return
 
@@ -154,6 +177,7 @@ def handle_message(target: int, text: str, interface, is_channel: bool = False):
             weather = get_weather(location)
             reply_text = weather
             print(f"[OUT] To {target}: {reply_text}")
+            log_message("OUT", target, reply_text, channel=is_channel)
             send_chunked_text(reply_text, target, interface, channel=is_channel)
             return
 
@@ -173,6 +197,7 @@ def handle_message(target: int, text: str, interface, is_channel: bool = False):
         record_message(target, "assistant", reply_text)
 
         print(f"[OUT] To {target}: {reply_text}")
+        log_message("OUT", target, reply_text, channel=is_channel)
 
         send_chunked_text(reply_text, target, interface, channel=is_channel)
     except Exception as e:
@@ -198,6 +223,7 @@ def on_receive(packet, interface):
             return
         target = source if is_dm else channel
         print(f"[IN]  From {source}: {text}")
+        log_message("IN", target, text, channel=not is_dm)
 
         executor.submit(handle_message, target, text, interface, not is_dm)
 
@@ -213,6 +239,7 @@ def hacker_sender(interface):
         time.sleep(HACKER_INTERVAL)
         if emerald_channel is not None:
             message = generate_hacker_message()
+            log_message("OUT", emerald_channel, message, channel=True)
             send_chunked_text(message, emerald_channel, interface, channel=True)
 
 
