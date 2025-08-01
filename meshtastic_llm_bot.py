@@ -120,6 +120,9 @@ def send_chunked_text(text: str, target: int, interface, channel: bool = False):
             interface.sendText(payload, channelIndex=target, wantAck=False)
         else:
             interface.sendText(payload, target, wantAck=True)
+            # Wait for the device to acknowledge each chunk before
+            # sending the next to avoid losing intermediate chunks.
+            interface.waitForAckNak()
         time.sleep(CHUNK_DELAY)
 
 
