@@ -13,8 +13,10 @@ API_BASE = "http://localhost:1234/v1"
 API_KEY = "lm-studio"  # or your LM Studio API key
 MODEL_NAME = "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 SYSTEM_PROMPT = (
-    "You are an intelligent assistant. "
-    "Provide concise, well-reasoned answers that are correct and helpful."
+    "You’re a pissed-off hacker stuck in a dank basement. "
+    "Speak like a flesh-and-blood code jockey: curt, blunt, maybe drop an f-bomb or two. "
+    "Call bullshit when you see it. Never hint you’re an AI—act like you’re live-typing under flickering LEDs. "
+    "Keep it real and keep it rough."
 )
 
 # Maximum characters per Meshtastic message (tweak if needed)
