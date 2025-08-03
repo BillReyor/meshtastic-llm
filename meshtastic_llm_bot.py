@@ -213,6 +213,8 @@ def on_receive(packet=None, interface=None, **kwargs):
             channel = pkt.get("channelIndex")
         if channel is None:
             channel = pkt.get("channel_index")
+        if channel is None:
+            channel = 0
 
         # ensure channel is an int for set membership
         try:
@@ -221,19 +223,28 @@ def on_receive(packet=None, interface=None, **kwargs):
             channel = None
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
+        print(
+            f"DEBUG: chan_raw={chan_info} parsed={channel} to={to} from={pkt.get('from')} text='{text}'"
+        )
         if not text:
+            print("DEBUG: no text; ignoring packet")
             return
 
         is_dm = to == iface.myInfo.my_node_num
         is_allowed = channel in respond_channels
         if not (is_dm or is_allowed):
+            print(
+                f"DEBUG: ignoring because is_dm={is_dm} and channel {channel} not in {respond_channels}"
+            )
             return
 
         src = pkt.get("from")
         if src == iface.myInfo.my_node_num:
+            print("DEBUG: ignoring own message")
             return
 
         if not is_addressed(text, is_dm, channel, src):
+            print("DEBUG: message not addressed to bot; ignoring")
             return
 
         if not is_dm:
