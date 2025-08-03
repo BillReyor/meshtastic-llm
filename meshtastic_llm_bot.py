@@ -125,17 +125,19 @@ def split_into_chunks(text: str, size: int):
 
 def send_chunked_text(text: str, target: int, iface, channel=False):
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
-    for i, chunk in enumerate(split_into_chunks(text, size)):
-        if i:
-            time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
+    chunks = list(split_into_chunks(text, size - 10))
+    total = len(chunks)
+    for i, chunk in enumerate(chunks, 1):
+        time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
+        chunk = f"[{i}/{total}] {chunk}"
         if channel:
             iface.sendText(chunk, channelIndex=target, wantAck=False)
         else:
             for attempt in range(3):
                 iface.sendText(chunk, target, wantAck=True)
                 try:
-                    iface.waitForAckNak(); break
+                    iface.waitForAckNak()
+                    break
                 except Exception:
                     if attempt == 2:
                         print("WARN: no ACK after 3 tries")
