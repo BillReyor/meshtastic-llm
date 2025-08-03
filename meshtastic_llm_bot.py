@@ -35,6 +35,7 @@ DELAY_MIN = 3                  # Minimum seconds between message chunks
 DELAY_MAX = 5                  # Maximum seconds between message chunks
 RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
+MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation history
 MAX_WORKERS = 4
 EMERALD_CHANNEL_INDEX = 3
 EMERALD_CHANNEL_NAME = "Emerald"
@@ -86,26 +87,30 @@ def record_message(peer: int, role: str, content: str):
             hist.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
         hist.append({"role": role, "content": content})
         if len(hist) > MAX_HISTORY_LEN + 1:
-            histories[peer] = hist[-(MAX_HISTORY_LEN + 1):]
-            hist = histories[peer]
+            hist = hist[-(MAX_HISTORY_LEN + 1):]
+        total_chars = sum(len(m["content"]) for m in hist[1:])
+        while total_chars > MAX_CONTEXT_CHARS and len(hist) > 1:
+            removed = hist.pop(1)
+            total_chars -= len(removed["content"])
+        histories[peer] = hist
         return hist.copy()
 
 
 def split_into_chunks(text: str, size: int):
-    min_size = min(40, size)
-    current, cur_bytes = [], 0
-    threshold = random.randint(min_size, size)
-    for ch in text:
-        b = len(ch.encode("utf-8"))
-        if cur_bytes + b > threshold:
-            yield "".join(current)
-            current, cur_bytes = [ch], b
-            threshold = random.randint(min_size, size)
-        else:
-            current.append(ch)
-            cur_bytes += b
-    if current:
-        yield "".join(current)
+    """Split text into chunks of at most ``size`` bytes at natural boundaries."""
+    while text:
+        if len(text.encode("utf-8")) <= size:
+            yield text
+            break
+        end = size
+        while len(text[:end].encode("utf-8")) > size:
+            end -= 1
+        split_point = max(text.rfind(sep, 0, end) for sep in ("\n", " "))
+        if split_point <= 0:
+            split_point = end
+        chunk = text[:split_point].rstrip()
+        yield chunk
+        text = text[split_point:].lstrip()
 
 
 def send_chunked_text(text: str, target: int, iface, channel=False):
