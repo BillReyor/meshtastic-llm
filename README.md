@@ -14,6 +14,10 @@ Install Python dependencies with:
 pip install -r requirements.txt
 ```
 
+The `requirements.txt` file pins exact versions of the core dependencies
+(`meshtastic==2.2.15`, `pypubsub==4.0.3`, and `requests==2.31.0`) to ensure
+they work together.
+
 ## Usage
 
 1. Start LM Studio and load the desired model. The script defaults to `mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF`, but you can change this in `meshtastic_llm_bot.py`.
