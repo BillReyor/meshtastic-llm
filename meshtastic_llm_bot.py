@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import datetime
+import logging
 import os
 import random
 import re
+import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -11,6 +13,13 @@ from urllib.parse import quote_plus
 import requests
 from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(message)s",
+    stream=sys.stdout,
+)
+logger = logging.getLogger(__name__)
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
 API_BASE = "http://localhost:1234/v1"
@@ -138,7 +147,7 @@ def send_chunked_text(text: str, target: int, iface, channel=False):
                     iface.waitForAckNak(); break
                 except Exception:
                     if attempt == 2:
-                        print("WARN: no ACK after 3 tries")
+                        logger.warning("no ACK after 3 tries")
                     time.sleep(RETRY_DELAY)
 
 
@@ -235,28 +244,36 @@ def on_receive(packet=None, interface=None, **kwargs):
             channel = None
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
-        print(
-            f"DEBUG: chan_raw={chan_info} parsed={channel} to={to} from={pkt.get('from')} text='{text}'"
+        logger.debug(
+            "chan_raw=%s parsed=%s to=%s from=%s text='%s'",
+            chan_info,
+            channel,
+            to,
+            pkt.get("from"),
+            text,
         )
         if not text:
-            print("DEBUG: no text; ignoring packet")
+            logger.debug("no text; ignoring packet")
             return
 
         is_dm = to == iface.myInfo.my_node_num
         is_allowed = channel in respond_channels
         if not (is_dm or is_allowed):
-            print(
-                f"DEBUG: ignoring because is_dm={is_dm} and channel {channel} not in {respond_channels}"
+            logger.debug(
+                "ignoring because is_dm=%s and channel %s not in %s",
+                is_dm,
+                channel,
+                respond_channels,
             )
             return
 
         src = pkt.get("from")
         if src == iface.myInfo.my_node_num:
-            print("DEBUG: ignoring own message")
+            logger.debug("ignoring own message")
             return
 
         if not is_addressed(text, is_dm, channel, src):
-            print("DEBUG: message not addressed to bot; ignoring")
+            logger.debug("message not addressed to bot; ignoring")
             return
 
         if not is_dm:
@@ -266,7 +283,7 @@ def on_receive(packet=None, interface=None, **kwargs):
         log_message("IN", target, text, channel=not is_dm)
         executor.submit(handle_message, target, text, iface, not is_dm)
     except Exception as e:
-        print(f"Error in on_receive: {e}")
+        logger.warning("Error in on_receive: %s", e)
 
 
 def greeting_loop(iface):
