@@ -37,8 +37,12 @@ When it is displayed automatically, the menu is sent as its own message before t
 
 ### Customizing
 
- - Update `API_BASE` if your LM Studio server is running on a different host or port.
- - Modify `MODEL_NAME`, `CHUNK_SIZE`, or `CHUNK_DELAY` to fit your setup or preferences.
+ - Set the environment variables `MESHTASTIC_API_BASE`, `MESHTASTIC_API_KEY`, and
+   `MESHTASTIC_MODEL_NAME` to override the LM Studio API base URL, API key, and
+   model name. They default to `http://localhost:1234/v1`, `lm-studio`, and
+   `mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF` respectively.
+ - Modify `CHUNK_BYTES`, `CHANNEL_CHUNK_BYTES`, or the `DELAY_MIN`/`DELAY_MAX`
+   values to fit your setup or preferences.
  - `MAX_HISTORY_LEN` controls how many messages per peer are kept in memory.
  - `MAX_WORKERS` limits how many threads can handle messages concurrently.
 
