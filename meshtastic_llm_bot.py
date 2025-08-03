@@ -213,6 +213,12 @@ def on_receive(packet=None, interface=None, **kwargs):
             channel = pkt.get("channelIndex")
         if channel is None:
             channel = pkt.get("channel_index")
+
+        # ensure channel is an int for set membership
+        try:
+            channel = int(channel)
+        except (TypeError, ValueError):
+            channel = None
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
         if not text:
