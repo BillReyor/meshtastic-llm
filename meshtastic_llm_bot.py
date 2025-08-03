@@ -204,7 +204,11 @@ def on_receive(packet=None, interface=None, **kwargs):
     try:
         pkt = packet or {}
         iface = interface
-        channel = pkt.get("channel")
+        chan_info = pkt.get("channel")
+        if isinstance(chan_info, dict):
+            channel = chan_info.get("index")
+        else:
+            channel = chan_info
         if channel is None:
             channel = pkt.get("channelIndex")
         if channel is None:
