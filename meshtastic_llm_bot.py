@@ -13,9 +13,11 @@ from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-API_BASE = "http://localhost:1234/v1"
-API_KEY = "lm-studio"
-MODEL_NAME = "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
+API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
+API_KEY = os.getenv("MESHTASTIC_API_KEY", "lm-studio")
+MODEL_NAME = os.getenv(
+    "MESHTASTIC_MODEL_NAME", "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
+)
 
 SYSTEM_PROMPT = (
 "You're Smudge (Rae 'Ray' McKinnon), a grizzled, caffeine-addicted hacker squatting in a filthy Vegas motel room near DEF CON 33. "
