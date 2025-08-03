@@ -203,7 +203,12 @@ def handle_message(target: int, text: str, iface, is_channel=False):
         r = requests.post(f"{API_BASE}/chat/completions",
                           headers={"Authorization": f"Bearer {API_KEY}"},
                           json=payload, timeout=60)
+        r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"].strip()
+    except requests.HTTPError as e:
+        status = e.response.status_code if e.response else "unknown"
+        detail = e.response.text.strip() if e.response else str(e)
+        reply = f"HTTP error {status}: {detail}"
     except Exception as e:
         reply = f"Error: {e}"
 
