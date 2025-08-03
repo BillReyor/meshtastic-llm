@@ -60,6 +60,7 @@ RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
 MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation history
 MAX_WORKERS = 4
+MAX_QUEUE_SIZE = 20             # Max queued messages awaiting processing
 LOG_DIR = "logs"
 
 CONVO_TIMEOUT = 120             # seconds to keep a convo “warm” in channel
@@ -90,7 +91,24 @@ history_lock = threading.Lock()
 last_addressed: dict[int, tuple[int, float]] = {}   # channel_id → (user, ts)
 address_lock = threading.Lock()
 
-executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+class BoundedExecutor:
+    def __init__(self, max_workers: int, max_queue_size: int):
+        self._semaphore = threading.BoundedSemaphore(max_workers + max_queue_size)
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    def submit(self, fn, *args, **kwargs):
+        if not self._semaphore.acquire(blocking=False):
+            logger.warning("executor queue full; dropping task")
+            return None
+        future = self._executor.submit(fn, *args, **kwargs)
+        future.add_done_callback(lambda f: self._semaphore.release())
+        return future
+
+    def shutdown(self, wait: bool = True):
+        self._executor.shutdown(wait=wait)
+
+
+executor = BoundedExecutor(MAX_WORKERS, MAX_QUEUE_SIZE)
 respond_channels: set[int] = set()
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -294,7 +312,8 @@ def on_receive(packet=None, interface=None, **kwargs):
 
         target = src if is_dm else channel
         log_message("IN", target, text, channel=not is_dm)
-        executor.submit(handle_message, target, text, iface, not is_dm)
+        if executor.submit(handle_message, target, text, iface, not is_dm) is None:
+            logger.warning("Dropping message for target %s due to full queue", target)
     except Exception as e:
         logger.warning("Error in on_receive: %s", e)
 
