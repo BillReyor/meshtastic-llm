@@ -74,6 +74,10 @@ MENU = (
 DEFAULT_LOCATION = "San Francisco"
 # Greetings
 HELLO_MESSAGES = ["Yo.", "Hey all.", "Smudge here."]
+BOOT_MESSAGE = (
+    "DM me or say 'smudge' if you expect a reply. "
+    "I remember the thread for about two minutes."
+)
 GREET_INTERVAL = 4 * 3600      # base interval between greetings
 GREET_JITTER = 900             # ±15 minutes in seconds
 # ─── END CONFIG ────────────────────────────────────────────────────────────────
@@ -326,12 +330,15 @@ def main():
         print(f"Meshtastic ↔️ Smudge ready. DMs or channel(s) {chs}")
     else:
         print("Meshtastic ↔️ Smudge ready. DMs only")
+    print(BOOT_MESSAGE)
 
     # initial hello
     hello = random.choice(HELLO_MESSAGES)
     for ch in respond_channels:
         log_message("OUT", ch, hello, channel=True)
         send_chunked_text(hello, ch, iface, channel=True)
+        log_message("OUT", ch, BOOT_MESSAGE, channel=True)
+        send_chunked_text(BOOT_MESSAGE, ch, iface, channel=True)
     threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
 
     try:
