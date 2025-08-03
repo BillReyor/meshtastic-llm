@@ -37,8 +37,6 @@ RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
 MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation history
 MAX_WORKERS = 4
-EMERALD_CHANNEL_INDEX = 3
-EMERALD_CHANNEL_NAME = "Emerald"
 LOG_DIR = "logs"
 
 CONVO_TIMEOUT = 120             # seconds to keep a convo “warm” in channel
@@ -66,7 +64,7 @@ last_addressed: dict[int, tuple[int, float]] = {}   # channel_id → (user, ts)
 address_lock = threading.Lock()
 
 executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
-emerald_channel = None
+respond_channels: set[int] = set()
 # ───────────────────────────────────────────────────────────────────────────────
 
 
@@ -213,8 +211,8 @@ def on_receive(packet=None, interface=None, **kwargs):
             return
 
         is_dm = to == iface.myInfo.my_node_num
-        is_emerald = emerald_channel is not None and channel == emerald_channel
-        if not (is_dm or is_emerald):
+        is_allowed = channel in respond_channels
+        if not (is_dm or is_allowed):
             return
 
         src = pkt.get("from")
@@ -239,23 +237,38 @@ def greeting_loop(iface):
         delay = GREET_INTERVAL + random.uniform(-GREET_JITTER, GREET_JITTER)
         time.sleep(max(0, delay))
         msg = random.choice(HELLO_MESSAGES)
-        log_message("OUT", emerald_channel, msg, channel=True)
-        send_chunked_text(msg, emerald_channel, iface, channel=True)
+        for ch in respond_channels:
+            log_message("OUT", ch, msg, channel=True)
+            send_chunked_text(msg, ch, iface, channel=True)
 
 
 # ─── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
-    global emerald_channel
+    global respond_channels
     iface = SerialInterface()
-    emerald_channel = EMERALD_CHANNEL_INDEX
+
+    selection = input("Respond on channel 0, 1, 2, 3, or 'all'? ").strip().lower()
+    if selection == "all":
+        respond_channels = set(range(4))
+    else:
+        try:
+            idx = int(selection)
+            respond_channels = {idx} if 0 <= idx <= 3 else set()
+        except ValueError:
+            respond_channels = set()
 
     pub.subscribe(on_receive, "meshtastic.receive")
-    print(f"Meshtastic ↔️ Smudge ready. DMs or channel {EMERALD_CHANNEL_INDEX} ({EMERALD_CHANNEL_NAME})")
+    if respond_channels:
+        chs = ", ".join(str(c) for c in sorted(respond_channels))
+        print(f"Meshtastic ↔️ Smudge ready. DMs or channel(s) {chs}")
+    else:
+        print("Meshtastic ↔️ Smudge ready. DMs only")
 
     # initial hello
     hello = random.choice(HELLO_MESSAGES)
-    log_message("OUT", EMERALD_CHANNEL_INDEX, hello, channel=True)
-    send_chunked_text(hello, EMERALD_CHANNEL_INDEX, iface, channel=True)
+    for ch in respond_channels:
+        log_message("OUT", ch, hello, channel=True)
+        send_chunked_text(hello, ch, iface, channel=True)
     threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
 
     try:
