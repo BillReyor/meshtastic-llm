@@ -204,7 +204,11 @@ def on_receive(packet=None, interface=None, **kwargs):
     try:
         pkt = packet or {}
         iface = interface
-        channel = pkt.get("channel") or pkt.get("channelIndex") or pkt.get("channel_index")
+        channel = pkt.get("channel")
+        if channel is None:
+            channel = pkt.get("channelIndex")
+        if channel is None:
+            channel = pkt.get("channel_index")
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
         if not text:
