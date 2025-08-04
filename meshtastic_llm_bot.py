@@ -18,6 +18,7 @@ from meshtastic.serial_interface import SerialInterface
 
 from weather import get_weather
 from bbs import handle_bbs, bbs_posts
+from zork import handle_zork
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -70,6 +71,8 @@ MENU = (
     "- bbs post <msg>: add a post\n"
     "- bbs list: show posts\n"
     "- bbs read <n>: read post n\n"
+    "- zork start: begin adventure game\n"
+    "- zork <cmd>: play the game\n"
     "- anything else: chat with the language model"
 )
 DEFAULT_LOCATION = "San Francisco"
@@ -203,6 +206,9 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
     if lower.startswith("weather"):
         mark_addressed(channel_id, user)
         return True
+    if lower.startswith("zork"):
+        mark_addressed(channel_id, user)
+        return True
     if HANDLE_RE.search(text):
         mark_addressed(channel_id, user)
         return True
@@ -222,6 +228,12 @@ def handle_message(target: int, text: str, iface, is_channel=False, user=None):
         parts = text.split(maxsplit=1)
         cmd = parts[1] if len(parts) > 1 else ""
         handle_bbs(target, cmd, iface, is_channel, user, log_message, send_chunked_text)
+        return
+
+    if lower.startswith("zork"):
+        parts = text.split(maxsplit=1)
+        cmd = parts[1] if len(parts) > 1 else ""
+        handle_zork(target, cmd, iface, is_channel, user, log_message, send_chunked_text)
         return
 
     if not is_safe_prompt(text):

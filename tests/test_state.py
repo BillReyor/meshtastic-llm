@@ -17,12 +17,14 @@ sys.modules["pubsub"] = pubsub_stub
 
 import unittest
 import meshtastic_llm_bot as bot
+import zork
 
 class StateTests(unittest.TestCase):
     def setUp(self):
         bot.histories.clear()
         bot.last_addressed.clear()
         bot.bbs_posts.clear()
+        zork.games.clear()
 
     def test_split_into_chunks(self):
         text = "a" * 500
@@ -51,6 +53,11 @@ class StateTests(unittest.TestCase):
         peer = 1
         channel = 0
         self.assertTrue(bot.is_addressed("bbs list", False, channel, peer))
+
+    def test_is_addressed_zork(self):
+        peer = 1
+        channel = 0
+        self.assertTrue(bot.is_addressed("zork start", False, channel, peer))
 
     def test_weather_command_with_handle(self):
         outputs = {}
@@ -119,6 +126,27 @@ class StateTests(unittest.TestCase):
         self.assertEqual(outputs[0], "Post #1 recorded.")
         self.assertIn("1. 42: hello", outputs[1])
         self.assertEqual(bot.histories, {})
+
+    def test_zork_start_and_move(self):
+        outputs = []
+
+        def fake_send(text, target, iface, channel=False):
+            outputs.append(text)
+
+        orig_send = bot.send_chunked_text
+        orig_log = bot.log_message
+        bot.send_chunked_text = fake_send
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(0, "zork start", object(), True, user=42)
+            bot.handle_message(0, "zork east", object(), True, user=42)
+        finally:
+            bot.send_chunked_text = orig_send
+            bot.log_message = orig_log
+            zork.games.clear()
+
+        self.assertIn("Room 1", outputs[0])
+        self.assertIn("Room 2", outputs[1])
 
 if __name__ == "__main__":
     unittest.main()
