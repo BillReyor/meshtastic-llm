@@ -23,14 +23,19 @@ def handle_zork(target: int, command: str, iface, is_channel: bool, user: int | 
     with _games_lock:
         game = games.get(key)
         if not command or command == "help":
-            reply = "Usage: zork start|quit|<command>"
+            reply = "Usage: zork start|quit|<command>. Prefix every action with 'zork'."
         elif command == "start":
             game = Game()
             games[key] = game
             buf = io.StringIO()
             with redirect_stdout(buf):
                 game.do_look()
-            reply = buf.getvalue().strip()
+            room = buf.getvalue().strip()
+            reply = (
+                f"{room}\n"
+                "Type commands like 'zork north' or 'zork take lamp'. "
+                "Use 'zork quit' to end."
+            )
         elif command in ("quit", "exit"):
             if key in games:
                 del games[key]
@@ -39,7 +44,7 @@ def handle_zork(target: int, command: str, iface, is_channel: bool, user: int | 
                 reply = "No active game."
         else:
             if not game:
-                reply = "No active game. Type 'zork start' to begin."
+                reply = "No active game. Type 'zork start' to begin and prefix every command with 'zork'."
             else:
                 buf = io.StringIO()
                 with redirect_stdout(buf):

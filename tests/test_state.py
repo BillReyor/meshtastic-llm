@@ -59,6 +59,28 @@ class StateTests(unittest.TestCase):
         channel = 0
         self.assertTrue(bot.is_addressed("zork start", False, channel, peer))
 
+    def test_boot_message_includes_menu(self):
+        self.assertIn(bot.MENU, bot.BOOT_MESSAGE)
+
+    def test_zork_usage_mentions_prefix(self):
+        outputs = []
+
+        def fake_send(text, target, iface, channel=False):
+            outputs.append(text)
+
+        orig_send = bot.send_chunked_text
+        orig_log = bot.log_message
+        bot.send_chunked_text = fake_send
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(0, "zork", object(), True, user=42)
+        finally:
+            bot.send_chunked_text = orig_send
+            bot.log_message = orig_log
+
+        self.assertTrue(outputs)
+        self.assertIn("prefix", outputs[0].lower())
+
     def test_weather_command_with_handle(self):
         outputs = {}
 
@@ -146,6 +168,7 @@ class StateTests(unittest.TestCase):
             zork.games.clear()
 
         self.assertIn("Room 1", outputs[0])
+        self.assertIn("zork north", outputs[0].lower())
         self.assertIn("Room 2", outputs[1])
 
 if __name__ == "__main__":

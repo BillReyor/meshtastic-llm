@@ -79,8 +79,8 @@ DEFAULT_LOCATION = "San Francisco"
 HELLO_MESSAGES = ["Yo.", "Hey all.", "Smudge here."]
 BOOT_MESSAGE = (
     "DM me or say 'smudge' if you expect a reply. "
-    "I remember the thread for about two minutes."
-)
+    "I remember the thread for about two minutes.\n"
+) + MENU
 GREET_INTERVAL = 4 * 3600
 GREET_JITTER = 900
 
@@ -207,7 +207,6 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
         mark_addressed(channel_id, user)
         return True
     if lower.startswith("zork"):
-        mark_addressed(channel_id, user)
         return True
     if HANDLE_RE.search(text):
         mark_addressed(channel_id, user)
