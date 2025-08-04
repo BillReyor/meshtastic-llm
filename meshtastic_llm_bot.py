@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
 import datetime
+import getpass
+import hmac
 import logging
 import os
 import random
 import re
+import signal
 import sys
 import threading
 import time
@@ -22,8 +25,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
-API_KEY = os.getenv("MESHTASTIC_API_KEY", "lm-studio")
+API_BASE = os.getenv("MESHTASTIC_API_BASE", "https://localhost:1234/v1")
+if not API_BASE.startswith("https://"):
+    raise ValueError("MESHTASTIC_API_BASE must start with https://")
+
+API_KEY = os.getenv("MESHTASTIC_API_KEY")
+if not API_KEY:
+    raise RuntimeError("MESHTASTIC_API_KEY environment variable required")
 MODEL_NAME = os.getenv(
     "MESHTASTIC_MODEL_NAME", "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 )
@@ -62,6 +70,10 @@ MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation his
 MAX_WORKERS = 4
 MAX_QUEUE_SIZE = 20             # Max queued messages awaiting processing
 LOG_DIR = "logs"
+
+MAX_PACKET_CHARS = 1024         # Max inbound packet characters
+MAX_TEXT_LEN = 1024             # Max stored/logged text length
+MAX_LOC_LEN = 256               # Max length for weather location
 
 CONVO_TIMEOUT = 120             # seconds to keep a convo “warm” in channel
 HANDLE_RE = re.compile(r"\bsmudge\b", re.IGNORECASE)
@@ -113,11 +125,21 @@ respond_channels: set[int] = set()
 # ───────────────────────────────────────────────────────────────────────────────
 
 
+def safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
+    s = s.replace("\r", "\\r").replace("\n", "\\n")
+    return s[:max_len]
+
+
 def log_message(direction: str, target: int, message: str, channel: bool = False):
-    os.makedirs(LOG_DIR, exist_ok=True)
+    message = safe_text(message)
+    os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
     date_str = datetime.date.today().isoformat()
     logfile = os.path.join(LOG_DIR, f"{date_str}.log")
     with open(logfile, "a", encoding="utf-8") as f:
+        try:
+            os.chmod(logfile, 0o600)
+        except OSError:
+            pass
         ts = datetime.datetime.now().isoformat()
         kind = "channel" if channel else "peer"
         f.write(f"{ts}\t{direction}\t{kind}:{target}\t{message}\n")
@@ -128,7 +150,7 @@ def record_message(peer: int, role: str, content: str):
         hist = histories.setdefault(peer, [])
         if not hist or hist[0]["role"] != "system":
             hist.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
-        hist.append({"role": role, "content": content})
+        hist.append({"role": role, "content": safe_text(content)})
         if len(hist) > MAX_HISTORY_LEN + 1:
             hist = hist[-(MAX_HISTORY_LEN + 1):]
         total_chars = sum(len(m["content"]) for m in hist[1:])
@@ -137,6 +159,12 @@ def record_message(peer: int, role: str, content: str):
             total_chars -= len(removed["content"])
         histories[peer] = hist
         return hist.copy()
+
+
+def is_safe_prompt(text: str) -> bool:
+    lower = text.lower()
+    forbidden = ["assistant:", "system:", "```"]
+    return not any(f in lower for f in forbidden)
 
 
 def split_into_chunks(text: str, size: int):
@@ -179,8 +207,9 @@ def send_chunked_text(text: str, target: int, iface, channel=False):
 
 def get_weather(loc: str = "") -> str:
     try:
+        loc = safe_text(loc, MAX_LOC_LEN)
         url = f"https://wttr.in/{quote_plus(loc) if loc else ''}?format=3"
-        r = requests.get(url, timeout=5)
+        r = requests.get(url, timeout=5, verify=True, allow_redirects=False)
         if r.status_code == 200:
             return r.text.strip()
     except Exception as e:
@@ -210,7 +239,14 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
 
 
 def handle_message(target: int, text: str, iface, is_channel=False):
+    text = safe_text(text)
     lower = text.lower()
+
+    if not is_safe_prompt(text):
+        reply = "fuck off."
+        log_message("OUT", target, reply, channel=is_channel)
+        send_chunked_text(reply, target, iface, channel=is_channel)
+        return
 
     if lower == "help":
         reply = MENU
@@ -220,6 +256,7 @@ def handle_message(target: int, text: str, iface, is_channel=False):
 
     if lower.startswith("weather"):
         loc = text.split(maxsplit=1)[1] if len(text.split()) > 1 else DEFAULT_LOCATION
+        loc = safe_text(loc, MAX_LOC_LEN)
         reply = get_weather(loc)
         log_message("OUT", target, reply, channel=is_channel)
         send_chunked_text(reply, target, iface, channel=is_channel)
@@ -232,12 +269,21 @@ def handle_message(target: int, text: str, iface, is_channel=False):
         return
 
     history = record_message(target, "user", text)
-    payload = {"model": MODEL_NAME, "messages": history,
-               "temperature": 0.7, "max_tokens": 300}
+    payload = {
+        "model": MODEL_NAME,
+        "messages": history,
+        "temperature": 0.7,
+        "max_tokens": 300,
+    }
     try:
-        r = requests.post(f"{API_BASE}/chat/completions",
-                          headers={"Authorization": f"Bearer {API_KEY}"},
-                          json=payload, timeout=60)
+        r = requests.post(
+            f"{API_BASE}/chat/completions",
+            headers={"Authorization": f"Bearer {API_KEY}"},
+            json=payload,
+            timeout=60,
+            verify=True,
+            allow_redirects=False,
+        )
         r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"].strip()
     except requests.HTTPError as e:
@@ -246,7 +292,10 @@ def handle_message(target: int, text: str, iface, is_channel=False):
         reply = f"HTTP error {status}: {detail}"
     except Exception as e:
         reply = f"Error: {e}"
+    finally:
+        del payload
 
+    reply = safe_text(reply)
     record_message(target, "assistant", reply)
     log_message("OUT", target, reply, channel=is_channel)
     send_chunked_text(reply, target, iface, channel=is_channel)
@@ -275,6 +324,15 @@ def on_receive(packet=None, interface=None, **kwargs):
             channel = None
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
+        if len(text) > MAX_PACKET_CHARS:
+            logger.warning("drop oversized packet from %s", pkt.get("from"))
+            return
+        try:
+            text.encode("utf-8")
+        except UnicodeEncodeError:
+            logger.warning("drop malformed packet from %s", pkt.get("from"))
+            return
+        text = safe_text(text)
         logger.debug(
             "chan_raw=%s parsed=%s to=%s from=%s text='%s'",
             chan_info,
@@ -332,6 +390,22 @@ def greeting_loop(iface):
 def main():
     global respond_channels
     iface = SerialInterface()
+
+    def shutdown(signum, frame):
+        iface.close()
+        executor.shutdown(wait=False)
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, shutdown)
+
+    token_env = os.getenv("SMUDGE_CLI_TOKEN")
+    if not token_env:
+        print("SMUDGE_CLI_TOKEN not set; refusing to start.")
+        return
+    user_token = getpass.getpass("CLI auth token: ")
+    if not hmac.compare_digest(user_token, token_env):
+        print("Invalid auth token.")
+        return
 
     selection = input("Respond on channel 0, 1, 2, 3, or 'all'? ").strip().lower()
     if selection == "all":
