@@ -394,7 +394,13 @@ def main():
         except ValueError:
             respond_channels = set()
 
-    pub.subscribe(on_receive, "meshtastic.receive")
+    # Subscribe to text messages from Meshtastic. Newer versions of the
+    # library publish to the more specific `meshtastic.receive.text` topic
+    # rather than the generic `meshtastic.receive` topic. Listening to the
+    # wrong topic meant the bot never saw incoming chats and therefore never
+    # responded. Subscribe to the text channel so we actually process
+    # messages and reply.
+    pub.subscribe(on_receive, "meshtastic.receive.text")
     if respond_channels:
         chs = ", ".join(str(c) for c in sorted(respond_channels))
         print(f"Meshtastic ↔️ Smudge ready. DMs or channel(s) {chs}")
