@@ -1,0 +1,504 @@
+{
+  "rooms": [
+    {
+      "id": 1,
+      "name": "Room 1",
+      "desc": "This is room 1.",
+      "exits": {
+        "south": 7,
+        "east": 2
+      },
+      "items": [
+        "lamp"
+      ],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 2,
+      "name": "Room 2",
+      "desc": "This is room 2.",
+      "exits": {
+        "south": 8,
+        "west": 1,
+        "east": 3
+      },
+      "items": [
+        "key"
+      ],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 3,
+      "name": "Room 3",
+      "desc": "This is room 3.",
+      "exits": {
+        "south": 9,
+        "west": 2,
+        "east": 4
+      },
+      "items": [
+        "lockpick"
+      ],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 4,
+      "name": "Room 4",
+      "desc": "This is room 4.",
+      "exits": {
+        "south": 10,
+        "west": 3,
+        "east": 5
+      },
+      "items": [
+        "treasure"
+      ],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 5,
+      "name": "Room 5",
+      "desc": "This is room 5.",
+      "exits": {
+        "south": 11,
+        "west": 4,
+        "east": 6
+      },
+      "items": [
+        "scroll"
+      ],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 6,
+      "name": "Room 6",
+      "desc": "This is room 6.",
+      "exits": {
+        "south": 12,
+        "west": 5
+      },
+      "items": [],
+      "state": {
+        "lit": false,
+        "locked": false
+      }
+    },
+    {
+      "id": 7,
+      "name": "Room 7",
+      "desc": "This is room 7.",
+      "exits": {
+        "north": 1,
+        "south": 13,
+        "east": 8
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 8,
+      "name": "Room 8",
+      "desc": "This is room 8.",
+      "exits": {
+        "north": 2,
+        "south": 14,
+        "west": 7,
+        "east": 9
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 9,
+      "name": "Room 9",
+      "desc": "This is room 9.",
+      "exits": {
+        "north": 3,
+        "south": 15,
+        "west": 8,
+        "east": 10
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 10,
+      "name": "Room 10",
+      "desc": "This is room 10.",
+      "exits": {
+        "north": 4,
+        "south": 16,
+        "west": 9,
+        "east": 11
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 11,
+      "name": "Room 11",
+      "desc": "This is room 11.",
+      "exits": {
+        "north": 5,
+        "south": 17,
+        "west": 10,
+        "east": 12
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 12,
+      "name": "Room 12",
+      "desc": "This is room 12.",
+      "exits": {
+        "north": 6,
+        "south": 18,
+        "west": 11
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 13,
+      "name": "Room 13",
+      "desc": "This is room 13.",
+      "exits": {
+        "north": 7,
+        "south": 19,
+        "east": 14
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 14,
+      "name": "Room 14",
+      "desc": "This is room 14.",
+      "exits": {
+        "north": 8,
+        "south": 20,
+        "west": 13,
+        "east": 15
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 15,
+      "name": "Room 15",
+      "desc": "This is room 15.",
+      "exits": {
+        "north": 9,
+        "south": 21,
+        "west": 14,
+        "east": 16
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 16,
+      "name": "Room 16",
+      "desc": "This is room 16.",
+      "exits": {
+        "north": 10,
+        "south": 22,
+        "west": 15,
+        "east": 17
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 17,
+      "name": "Room 17",
+      "desc": "This is room 17.",
+      "exits": {
+        "north": 11,
+        "south": 23,
+        "west": 16,
+        "east": 18
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 18,
+      "name": "Room 18",
+      "desc": "This is room 18.",
+      "exits": {
+        "north": 12,
+        "south": 24,
+        "west": 17
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 19,
+      "name": "Room 19",
+      "desc": "This is room 19.",
+      "exits": {
+        "north": 13,
+        "south": 25,
+        "east": 20
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 20,
+      "name": "Room 20",
+      "desc": "This is room 20.",
+      "exits": {
+        "north": 14,
+        "south": 26,
+        "west": 19,
+        "east": 21
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 21,
+      "name": "Room 21",
+      "desc": "This is room 21.",
+      "exits": {
+        "north": 15,
+        "south": 27,
+        "west": 20,
+        "east": 22
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 22,
+      "name": "Room 22",
+      "desc": "This is room 22.",
+      "exits": {
+        "north": 16,
+        "south": 28,
+        "west": 21,
+        "east": 23
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 23,
+      "name": "Room 23",
+      "desc": "This is room 23.",
+      "exits": {
+        "north": 17,
+        "south": 29,
+        "west": 22,
+        "east": 24
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 24,
+      "name": "Room 24",
+      "desc": "This is room 24.",
+      "exits": {
+        "north": 18,
+        "south": 30,
+        "west": 23
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 25,
+      "name": "Room 25",
+      "desc": "This is room 25.",
+      "exits": {
+        "north": 19,
+        "east": 26
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 26,
+      "name": "Room 26",
+      "desc": "This is room 26.",
+      "exits": {
+        "north": 20,
+        "west": 25,
+        "east": 27
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 27,
+      "name": "Room 27",
+      "desc": "This is room 27.",
+      "exits": {
+        "north": 21,
+        "west": 26,
+        "east": 28
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 28,
+      "name": "Room 28",
+      "desc": "This is room 28.",
+      "exits": {
+        "north": 22,
+        "west": 27,
+        "east": 29
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 29,
+      "name": "Room 29",
+      "desc": "This is room 29.",
+      "exits": {
+        "north": 23,
+        "west": 28,
+        "east": 30
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    },
+    {
+      "id": 30,
+      "name": "Room 30",
+      "desc": "This is room 30.",
+      "exits": {
+        "north": 24,
+        "west": 29
+      },
+      "items": [],
+      "state": {
+        "lit": true,
+        "locked": false
+      }
+    }
+  ],
+  "items": {
+    "lamp": {
+      "name": "lamp",
+      "weight": 1,
+      "desc": "An old oil lamp",
+      "can_carry": true
+    },
+    "key": {
+      "name": "key",
+      "weight": 1,
+      "desc": "A small brass key",
+      "can_carry": true
+    },
+    "lockpick": {
+      "name": "lockpick",
+      "weight": 1,
+      "desc": "A makeshift lockpick",
+      "can_carry": true
+    },
+    "treasure": {
+      "name": "treasure",
+      "weight": 5,
+      "desc": "Shiny treasure",
+      "can_carry": true
+    },
+    "scroll": {
+      "name": "scroll",
+      "weight": 1,
+      "desc": "A mysterious scroll",
+      "can_carry": true
+    }
+  }
+}

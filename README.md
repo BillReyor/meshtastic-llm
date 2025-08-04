@@ -39,6 +39,16 @@ When started, the program prompts for which channel(s) (0–3 or *all*) it shoul
 The command menu is shown only on your first message to the bot or whenever you send `help`.
 When it is displayed automatically, the menu is sent as its own message before the bot replies to your request.
 
+## Text Adventure Module
+
+A small Zork-like text adventure engine is available in the `adventure` package. Run it with:
+
+```bash
+python -m adventure.game
+```
+
+The game loads a 30-room world from JSON data, supports standard adventure commands, scoring, and save/restore.
+
 ### Customizing
 
  - Set the environment variables `MESHTASTIC_API_BASE`, `MESHTASTIC_API_KEY`, and
