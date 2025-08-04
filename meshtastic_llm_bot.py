@@ -11,11 +11,13 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from urllib.parse import quote_plus
 
 import requests
 from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
+
+from weather import get_weather
+from bbs import handle_bbs, bbs_posts
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -85,9 +87,6 @@ history_lock = threading.Lock()
 
 last_addressed: dict[int, tuple[int, float]] = {}
 address_lock = threading.Lock()
-
-bbs_posts: dict[int, list[tuple[int | None, str]]] = {}
-bbs_lock = threading.Lock()
 
 class BoundedExecutor:
     def __init__(self, max_workers: int, max_queue_size: int):
@@ -188,53 +187,9 @@ def send_chunked_text(text: str, target: int, iface, channel=False):
                     time.sleep(RETRY_DELAY)
 
 
-def get_weather(loc: str = "") -> str:
-    try:
-        loc = safe_text(loc, MAX_LOC_LEN)
-        url = f"https://wttr.in/{quote_plus(loc) if loc else ''}?format=3&u"
-        r = requests.get(url, timeout=5, verify=True, allow_redirects=False)
-        if r.status_code == 200:
-            return r.text.strip()
-    except Exception as e:
-        return f"Error retrieving weather: {e}"
-    return "Unable to retrieve weather."
-
-
 def mark_addressed(channel_id: int, user: int):
     with address_lock:
         last_addressed[channel_id] = (user, time.time())
-
-
-def handle_bbs(target: int, command: str, iface, is_channel: bool, user: int | None):
-    command = command.strip()
-    with bbs_lock:
-        board = bbs_posts.setdefault(target, [])
-        if not command or command == "list":
-            if not board:
-                reply = "No posts."
-            else:
-                lines = [f"{i+1}. {p}" for i, p in enumerate(board)]
-                reply = "Posts:\n" + "\n".join(lines)
-        elif command.startswith("read"):
-            parts = command.split(maxsplit=1)
-            if len(parts) == 2 and parts[1].isdigit():
-                idx = int(parts[1]) - 1
-                if 0 <= idx < len(board):
-                    reply = board[idx]
-                else:
-                    reply = "No such post."
-            else:
-                reply = "Usage: bbs read <n>"
-        else:
-            # treat anything else as a post
-            content = command[5:].strip() if command.startswith("post ") else command
-            content = safe_text(content)
-            entry = f"{user}: {content}" if user is not None else content
-            board.append(entry)
-            reply = f"Post #{len(board)} recorded."
-
-    log_message("OUT", target, reply, channel=is_channel)
-    send_chunked_text(reply, target, iface, channel=is_channel)
 
 
 def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
@@ -266,7 +221,7 @@ def handle_message(target: int, text: str, iface, is_channel=False, user=None):
     if lower.startswith("bbs"):
         parts = text.split(maxsplit=1)
         cmd = parts[1] if len(parts) > 1 else ""
-        handle_bbs(target, cmd, iface, is_channel, user)
+        handle_bbs(target, cmd, iface, is_channel, user, log_message, send_chunked_text)
         return
 
     if not is_safe_prompt(text):
