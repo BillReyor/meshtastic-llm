@@ -50,7 +50,7 @@ class StateTests(unittest.TestCase):
         peer = 1
         channel = 0
         self.assertFalse(bot.is_addressed("hello", False, channel, peer))
-        self.assertTrue(bot.is_addressed("hey smudge", False, channel, peer))
+        self.assertTrue(bot.is_addressed("hey goon", False, channel, peer))
 
     def test_is_addressed_weather(self):
         peer = 1
@@ -106,7 +106,7 @@ class StateTests(unittest.TestCase):
         bot.send_chunked_text = fake_send_chunked
         bot.log_message = lambda *a, **k: None
         try:
-            bot.handle_message(1, "smudge weather Paris", object(), True)
+            bot.handle_message(1, "goon weather Paris", object(), True)
         finally:
             bot.get_weather = orig_get_weather
             bot.send_chunked_text = orig_send_chunked
