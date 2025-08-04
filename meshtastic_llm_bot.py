@@ -230,6 +230,7 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
 
 def handle_message(target: int, text: str, iface, is_channel=False):
     text = safe_text(text)
+    text = re.sub(r"^\s*smudge[:,]?\s*", "", text, flags=re.IGNORECASE)
     lower = text.lower()
 
     if not is_safe_prompt(text):
