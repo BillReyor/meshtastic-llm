@@ -396,11 +396,11 @@ def main():
     signal.signal(signal.SIGTERM, shutdown)
 
     token_env = os.getenv("SMUDGE_CLI_TOKEN")
-
-    user_token = getpass.getpass("CLI auth token: ")
-    if not hmac.compare_digest(user_token, token_env):
-        print("Invalid auth token.")
-        return
+    if token_env:
+        user_token = getpass.getpass("CLI auth token: ")
+        if not hmac.compare_digest(user_token, token_env):
+            print("Invalid auth token.")
+            return
 
     selection = input("Respond on channel 0, 1, 2, 3, or 'all'? ").strip().lower()
     if selection == "all":
