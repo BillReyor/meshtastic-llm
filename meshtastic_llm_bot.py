@@ -18,7 +18,7 @@ from pubsub import pub
 from meshtastic.serial_interface import SerialInterface
 
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.DEBUG,
     format="%(asctime)s %(levelname)s %(message)s",
     stream=sys.stdout,
 )
