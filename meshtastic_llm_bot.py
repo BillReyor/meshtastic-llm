@@ -24,7 +24,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# ─── CONFIG ────────────────────────────────────────────────────────────────────
 API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
 
 API_KEY = os.getenv("MESHTASTIC_API_KEY")
@@ -57,23 +56,25 @@ SYSTEM_PROMPT = (
 
 "Mix insults often, stay unpredictable, hilarious, and authentically abrasive—leave no doubt you're annoyed by the never-ending parade of script kiddies knocking at your digital door.")
 
-CHUNK_BYTES = 200              # DM payload size
-CHANNEL_CHUNK_BYTES = 180       # Channel payload size
-DELAY_MIN = 3                  # Minimum seconds between message chunks
-DELAY_MAX = 5                  # Maximum seconds between message chunks
-RETRY_DELAY = 1                 # Seconds before ACK retry
+CHUNK_BYTES = 200
+CHANNEL_CHUNK_BYTES = 180
+DELAY_MIN = 3
+DELAY_MAX = 5
+RETRY_DELAY = 1
 MAX_HISTORY_LEN = 20
-MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation history
+MAX_CONTEXT_CHARS = 4000
 MAX_WORKERS = 4
-MAX_QUEUE_SIZE = 20             # Max queued messages awaiting processing
+MAX_QUEUE_SIZE = 20
 LOG_DIR = "logs"
+os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
 
-MAX_PACKET_CHARS = 1024         # Max inbound packet characters
-MAX_TEXT_LEN = 1024             # Max stored/logged text length
-MAX_LOC_LEN = 256               # Max length for weather location
+MAX_PACKET_CHARS = 1024
+MAX_TEXT_LEN = 1024
+MAX_LOC_LEN = 256
 
-CONVO_TIMEOUT = 120             # seconds to keep a convo “warm” in channel
+CONVO_TIMEOUT = 120
 HANDLE_RE = re.compile(r"\bsmudge\b", re.IGNORECASE)
+FORBIDDEN_PROMPTS = ("assistant:", "system:", "```")
 
 MENU = (
     "Commands:\n"
@@ -82,22 +83,19 @@ MENU = (
     "- anything else: chat with the language model"
 )
 DEFAULT_LOCATION = "San Francisco"
-# Greetings
 HELLO_MESSAGES = ["Yo.", "Hey all.", "Smudge here."]
 BOOT_MESSAGE = (
     "DM me or say 'smudge' if you expect a reply. "
     "I remember the thread for about two minutes."
 )
-GREET_INTERVAL = 4 * 3600      # base interval between greetings
-GREET_JITTER = 900             # ±15 minutes in seconds
-# ─── END CONFIG ────────────────────────────────────────────────────────────────
+GREET_INTERVAL = 4 * 3600
+GREET_JITTER = 900
 
 
-# ─── STATE ─────────────────────────────────────────────────────────────────────
 histories: dict[int, list[dict]] = {}
 history_lock = threading.Lock()
 
-last_addressed: dict[int, tuple[int, float]] = {}   # channel_id → (user, ts)
+last_addressed: dict[int, tuple[int, float]] = {}
 address_lock = threading.Lock()
 
 class BoundedExecutor:
@@ -119,7 +117,6 @@ class BoundedExecutor:
 
 executor = BoundedExecutor(MAX_WORKERS, MAX_QUEUE_SIZE)
 respond_channels: set[int] = set()
-# ───────────────────────────────────────────────────────────────────────────────
 
 
 def safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
@@ -129,7 +126,6 @@ def safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
 
 def log_message(direction: str, target: int, message: str, channel: bool = False):
     message = safe_text(message)
-    os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
     date_str = datetime.date.today().isoformat()
     logfile = os.path.join(LOG_DIR, f"{date_str}.log")
     with open(logfile, "a", encoding="utf-8") as f:
@@ -160,8 +156,7 @@ def record_message(peer: int, role: str, content: str):
 
 def is_safe_prompt(text: str) -> bool:
     lower = text.lower()
-    forbidden = ["assistant:", "system:", "```"]
-    return not any(f in lower for f in forbidden)
+    return not any(f in lower for f in FORBIDDEN_PROMPTS)
 
 
 def split_into_chunks(text: str, size: int):
@@ -214,7 +209,6 @@ def get_weather(loc: str = "") -> str:
     return "Unable to retrieve weather."
 
 
-# ─── ADDRESSING LOGIC ──────────────────────────────────────────────────────────
 def mark_addressed(channel_id: int, user: int):
     with address_lock:
         last_addressed[channel_id] = (user, time.time())
@@ -232,7 +226,6 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
     if user == prev_user and now - ts < CONVO_TIMEOUT:
         return True
     return False
-# ───────────────────────────────────────────────────────────────────────────────
 
 
 def handle_message(target: int, text: str, iface, is_channel=False):
@@ -252,7 +245,8 @@ def handle_message(target: int, text: str, iface, is_channel=False):
         return
 
     if lower.startswith("weather"):
-        loc = text.split(maxsplit=1)[1] if len(text.split()) > 1 else DEFAULT_LOCATION
+        parts = text.split(maxsplit=1)
+        loc = parts[1] if len(parts) > 1 else DEFAULT_LOCATION
         loc = safe_text(loc, MAX_LOC_LEN)
         reply = get_weather(loc)
         log_message("OUT", target, reply, channel=is_channel)
@@ -314,7 +308,6 @@ def on_receive(packet=None, interface=None, **kwargs):
         if channel is None:
             channel = 0
 
-        # ensure channel is an int for set membership
         try:
             channel = int(channel)
         except (TypeError, ValueError):
@@ -383,7 +376,6 @@ def greeting_loop(iface):
             send_chunked_text(msg, ch, iface, channel=True)
 
 
-# ─── MAIN ──────────────────────────────────────────────────────────────────────
 def main():
     global respond_channels
     iface = SerialInterface()
@@ -420,7 +412,6 @@ def main():
         print("Meshtastic ↔️ Smudge ready. DMs only")
     print(BOOT_MESSAGE)
 
-    # initial hello
     hello = random.choice(HELLO_MESSAGES)
     for ch in respond_channels:
         log_message("OUT", ch, hello, channel=True)
