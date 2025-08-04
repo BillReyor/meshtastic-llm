@@ -19,7 +19,7 @@
     {
       "id": 2,
       "name": "Abandoned Guardroom",
-      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings.",
+      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A faded flyer on the wall advertises DEFCON 33.",
       "exits": {
         "south": 8,
         "west": 1,
@@ -77,7 +77,8 @@
         "east": 6
       },
       "items": [
-        "scroll"
+        "scroll",
+        "defcon_badge"
       ],
       "state": {
         "lit": true,
@@ -524,6 +525,12 @@
       "name": "rope",
       "weight": 3,
       "desc": "A sturdy length of rope - looks reliable.",
+      "can_carry": true
+    },
+    "defcon_badge": {
+      "name": "defcon_badge",
+      "weight": 1,
+      "desc": "A shiny lanyard from DEFCON 33 that hums with hacker energy.",
       "can_carry": true
     },
     "ancient_crown": {
