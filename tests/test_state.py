@@ -1,6 +1,9 @@
-import os, sys, types
+import os, sys, types, tempfile, shutil, atexit
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 os.environ.setdefault("MESHTASTIC_API_KEY", "test")
+BBS_DIR = tempfile.mkdtemp(prefix="bbs-test-")
+os.environ["MESHTASTIC_BBS_DIR"] = BBS_DIR
+atexit.register(lambda: shutil.rmtree(BBS_DIR, ignore_errors=True))
 
 meshtastic_stub = types.ModuleType("meshtastic")
 serial_stub = types.ModuleType("serial_interface")
@@ -25,6 +28,11 @@ class StateTests(unittest.TestCase):
         bot.last_addressed.clear()
         bot.bbs_posts.clear()
         zork.games.clear()
+        for f in os.listdir(BBS_DIR):
+            try:
+                os.remove(os.path.join(BBS_DIR, f))
+            except FileNotFoundError:
+                pass
 
     def test_split_into_chunks(self):
         text = "a" * 500
@@ -148,6 +156,27 @@ class StateTests(unittest.TestCase):
         self.assertEqual(outputs[0], "Post #1 recorded.")
         self.assertIn("1. 42: hello", outputs[1])
         self.assertEqual(bot.histories, {})
+
+    def test_bbs_persistence(self):
+        outputs = []
+
+        def fake_send_chunked(text, target, iface, channel=False):
+            outputs.append(text)
+
+        orig_send = bot.send_chunked_text
+        orig_log = bot.log_message
+        bot.send_chunked_text = fake_send_chunked
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(0, "bbs post saved", object(), True, user=42)
+            bot.bbs_posts.clear()
+            bot.handle_message(0, "bbs list", object(), True, user=42)
+        finally:
+            bot.send_chunked_text = orig_send
+            bot.log_message = orig_log
+            bot.bbs_posts.clear()
+
+        self.assertIn("1. 42: saved", outputs[-1])
 
     def test_zork_start_and_move(self):
         outputs = []

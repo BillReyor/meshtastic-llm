@@ -34,7 +34,14 @@ When started, the program prompts for which channel(s) (0–3 or *all*) it shoul
 
 - `help` – display the list of commands.
 - `weather [location]` – show the current weather using the wttr.in service. If no location is given, a default location is used.
+- `bbs post <msg>` – add a post to the simple bulletin board.
+- `bbs list` – show posts on the board.
+- `bbs read <n>` – read post *n*.
+- `zork start` – begin the text adventure.
+- `zork <cmd>` – play the game.
 - Any other text will be answered by the language model.
+
+BBS posts are stored on disk in a directory named `bbs_data` (or the path given by the `MESHTASTIC_BBS_DIR` environment variable) so they persist across restarts. Files are created with restrictive permissions for security.
 
 The command menu is shown only on your first message to the bot or whenever you send `help`.
 When it is displayed automatically, the menu is sent as its own message before the bot replies to your request.
