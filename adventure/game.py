@@ -201,8 +201,12 @@ class Game:
             self.score += 5
             return
         if noun == "defcon_badge":
-            print("You flash your DEFCON 33 badge. Somewhere, a modem dials up. Score +33!")
+            print("You flash your DEFCON 33 badge. A holographic unicorn invites you to QueerCon's mixers at Chillout 2 (16:00-18:00 Thu-Sat). Score +33!")
             self.score += 33
+            return
+        if noun == "queercon_flyer":
+            print("The flyer details QueerCon, a con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Score +5!")
+            self.score += 5
             return
         print("Nothing happens.")
 
@@ -247,6 +251,9 @@ class Game:
         """Toggle verbose room descriptions."""
         self.verbose = not self.verbose
         print("Verbose" if self.verbose else "Brief")
+
+    def do_queercon(self, *_):
+        print("QueerCon is DEFCON's con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Everyone is welcome!")
 
     def unknown(self, verb, *_):
         print(f"I don't know the word '{verb}'; try LOOK or EXAMINE")
