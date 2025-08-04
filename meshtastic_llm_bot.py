@@ -368,14 +368,6 @@ def greeting_loop(iface):
 
 def main():
     global respond_channels
-    iface = SerialInterface()
-
-    def shutdown(signum, frame):
-        iface.close()
-        executor.shutdown(wait=False)
-        sys.exit(0)
-
-    signal.signal(signal.SIGTERM, shutdown)
 
     token_env = os.getenv("SMUDGE_CLI_TOKEN")
     if token_env:
@@ -393,6 +385,15 @@ def main():
             respond_channels = {idx} if 0 <= idx <= 3 else set()
         except ValueError:
             respond_channels = set()
+
+    iface = SerialInterface()
+
+    def shutdown(signum, frame):
+        iface.close()
+        executor.shutdown(wait=False)
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, shutdown)
 
     # Subscribe to text messages from Meshtastic. Newer versions of the
     # library publish to the more specific `meshtastic.receive.text` topic
