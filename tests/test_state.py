@@ -22,6 +22,7 @@ class StateTests(unittest.TestCase):
     def setUp(self):
         bot.histories.clear()
         bot.last_addressed.clear()
+        bot.bbs_posts.clear()
 
     def test_split_into_chunks(self):
         text = "a" * 500
@@ -45,6 +46,11 @@ class StateTests(unittest.TestCase):
         peer = 1
         channel = 0
         self.assertTrue(bot.is_addressed("weather Paris", False, channel, peer))
+
+    def test_is_addressed_bbs(self):
+        peer = 1
+        channel = 0
+        self.assertTrue(bot.is_addressed("bbs list", False, channel, peer))
 
     def test_weather_command_with_handle(self):
         outputs = {}
@@ -91,6 +97,28 @@ class StateTests(unittest.TestCase):
             bot.requests.get = orig_get
 
         self.assertIn("format=3&u", called.get("url", ""))
+
+    def test_bbs_post_and_list(self):
+        outputs = []
+
+        def fake_send_chunked(text, target, iface, channel=False):
+            outputs.append(text)
+
+        orig_send = bot.send_chunked_text
+        orig_log = bot.log_message
+        bot.send_chunked_text = fake_send_chunked
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(0, "bbs post hello", object(), True, user=42)
+            bot.handle_message(0, "bbs list", object(), True, user=42)
+        finally:
+            bot.send_chunked_text = orig_send
+            bot.log_message = orig_log
+            bot.bbs_posts.clear()
+
+        self.assertEqual(outputs[0], "Post #1 recorded.")
+        self.assertIn("1. 42: hello", outputs[1])
+        self.assertEqual(bot.histories, {})
 
 if __name__ == "__main__":
     unittest.main()
