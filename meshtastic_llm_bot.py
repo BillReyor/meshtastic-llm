@@ -322,7 +322,8 @@ def on_receive(packet=None, interface=None, **kwargs):
 
         target = src if is_dm else channel
         log_message("IN", target, screened, channel=not is_dm)
-        executor.submit(handle_message, target, screened, iface, not is_dm)
+        if executor.submit(handle_message, target, screened, iface, not is_dm) is None:
+            logger.warning("Dropping message for target %s due to full queue", target)
     except Exception as e:
         logger.warning("Error in on_receive: %s", e)
 
