@@ -40,5 +40,31 @@ class StateTests(unittest.TestCase):
         self.assertFalse(bot.is_addressed("hello", False, channel, peer))
         self.assertTrue(bot.is_addressed("hey smudge", False, channel, peer))
 
+    def test_weather_command_with_handle(self):
+        outputs = {}
+
+        def fake_get_weather(loc):
+            outputs["loc"] = loc
+            return f"Weather for {loc}"
+
+        def fake_send_chunked(text, target, iface, channel=False):
+            outputs["reply"] = text
+
+        orig_get_weather = bot.get_weather
+        orig_send_chunked = bot.send_chunked_text
+        orig_log_message = bot.log_message
+        bot.get_weather = fake_get_weather
+        bot.send_chunked_text = fake_send_chunked
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(1, "smudge weather Paris", object(), True)
+        finally:
+            bot.get_weather = orig_get_weather
+            bot.send_chunked_text = orig_send_chunked
+            bot.log_message = orig_log_message
+
+        self.assertEqual(outputs.get("loc"), "Paris")
+        self.assertEqual(outputs.get("reply"), "Weather for Paris")
+
 if __name__ == "__main__":
     unittest.main()
