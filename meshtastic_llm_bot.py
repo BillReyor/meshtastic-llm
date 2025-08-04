@@ -60,6 +60,7 @@ RETRY_DELAY = 1                 # Seconds before ACK retry
 MAX_HISTORY_LEN = 20
 MAX_CONTEXT_CHARS = 4000        # Approximate character cap for conversation history
 MAX_WORKERS = 4
+MAX_QUEUE_SIZE = 20             # Max queued messages awaiting processing
 LOG_DIR = "logs"
 
 CONVO_TIMEOUT = 120             # seconds to keep a convo “warm” in channel
@@ -83,6 +84,28 @@ GREET_JITTER = 900             # ±15 minutes in seconds
 # ─── END CONFIG ────────────────────────────────────────────────────────────────
 
 
+# ─── GUARD LAYER ───────────────────────────────────────────────────────────────
+CONTROL_CHARS_RE = re.compile(r"[\x00-\x1f\x7f]")
+BLOCK_PATTERNS = [
+    re.compile(r"<script", re.IGNORECASE),
+    re.compile(r"\b(drop|delete|insert|update)\b", re.IGNORECASE),
+]
+
+
+def screen_text(text: str) -> str | None:
+    """Sanitize ``text`` and block common malicious patterns.
+
+    Returns sanitized text, or ``None`` if the message should be dropped.
+    """
+    cleaned = CONTROL_CHARS_RE.sub("", text).strip()
+    if not cleaned:
+        return None
+    for pat in BLOCK_PATTERNS:
+        if pat.search(cleaned):
+            return None
+    return cleaned
+# ───────────────────────────────────────────────────────────────────────────────
+
 # ─── STATE ─────────────────────────────────────────────────────────────────────
 histories: dict[int, list[dict]] = {}
 history_lock = threading.Lock()
@@ -90,7 +113,26 @@ history_lock = threading.Lock()
 last_addressed: dict[int, tuple[int, float]] = {}   # channel_id → (user, ts)
 address_lock = threading.Lock()
 
-executor = ThreadPoolExecutor(max_workers=MAX_WORKERS)
+class BoundedExecutor:
+    """ThreadPoolExecutor wrapper that bounds queued tasks."""
+
+    def __init__(self, max_workers: int, max_queue_size: int):
+        self._semaphore = threading.BoundedSemaphore(max_workers + max_queue_size)
+        self._executor = ThreadPoolExecutor(max_workers=max_workers)
+
+    def submit(self, fn, *args, **kwargs):
+        if not self._semaphore.acquire(blocking=False):
+            logger.warning("executor queue full; dropping task")
+            return None
+        future = self._executor.submit(fn, *args, **kwargs)
+        future.add_done_callback(lambda f: self._semaphore.release())
+        return future
+
+    def shutdown(self, wait: bool = True):
+        self._executor.shutdown(wait=wait)
+
+
+executor = BoundedExecutor(MAX_WORKERS, MAX_QUEUE_SIZE)
 respond_channels: set[int] = set()
 # ───────────────────────────────────────────────────────────────────────────────
 
@@ -229,6 +271,7 @@ def handle_message(target: int, text: str, iface, is_channel=False):
     except Exception as e:
         reply = f"Error: {e}"
 
+    reply = screen_text(reply) or "Content blocked."
     record_message(target, "assistant", reply)
     log_message("OUT", target, reply, channel=is_channel)
     send_chunked_text(reply, target, iface, channel=is_channel)
@@ -256,16 +299,16 @@ def on_receive(packet=None, interface=None, **kwargs):
         except (TypeError, ValueError):
             channel = None
         to = pkt.get("to")
-        text = pkt.get("decoded", {}).get("text", "").strip()
+        raw_text = pkt.get("decoded", {}).get("text", "").strip()
         logger.debug(
             "chan_raw=%s parsed=%s to=%s from=%s text='%s'",
             chan_info,
             channel,
             to,
             pkt.get("from"),
-            text,
+            raw_text,
         )
-        if not text:
+        if not raw_text:
             logger.debug("no text; ignoring packet")
             return
 
@@ -285,16 +328,22 @@ def on_receive(packet=None, interface=None, **kwargs):
             logger.debug("ignoring own message")
             return
 
-        if not is_addressed(text, is_dm, channel, src):
+        if not is_addressed(raw_text, is_dm, channel, src):
             logger.debug("message not addressed to bot; ignoring")
+            return
+
+        screened = screen_text(raw_text)
+        if screened is None:
+            logger.debug("message rejected by guard layer")
             return
 
         if not is_dm:
             mark_addressed(channel, src)
 
         target = src if is_dm else channel
-        log_message("IN", target, text, channel=not is_dm)
-        executor.submit(handle_message, target, text, iface, not is_dm)
+        log_message("IN", target, screened, channel=not is_dm)
+        if executor.submit(handle_message, target, screened, iface, not is_dm) is None:
+            logger.warning("Dropping message for target %s due to full queue", target)
     except Exception as e:
         logger.warning("Error in on_receive: %s", e)
 
