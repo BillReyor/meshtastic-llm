@@ -157,7 +157,6 @@ def is_safe_prompt(text: str) -> bool:
 
 
 def split_into_chunks(text: str, size: int):
-    """Split text into chunks of at most ``size`` bytes at natural boundaries."""
     while text:
         if len(text.encode("utf-8")) <= size:
             yield text
@@ -432,12 +431,6 @@ def main():
 
     signal.signal(signal.SIGTERM, shutdown)
 
-    # Subscribe to text messages from Meshtastic. Newer versions of the
-    # library publish to the more specific `meshtastic.receive.text` topic
-    # rather than the generic `meshtastic.receive` topic. Listening to the
-    # wrong topic meant the bot never saw incoming chats and therefore never
-    # responded. Subscribe to the text channel so we actually process
-    # messages and reply.
     pub.subscribe(on_receive, "meshtastic.receive.text")
     if respond_channels:
         chs = ", ".join(str(c) for c in sorted(respond_channels))

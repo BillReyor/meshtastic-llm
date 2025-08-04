@@ -3,12 +3,10 @@ import os
 import random
 from typing import Dict, List, Tuple, Callable
 
-# Parser plugin registry
 _VERBS: Dict[str, Callable] = {}
 
 
 def register_verb(verb: str, func: Callable):
-    """Register a new verb with the parser."""
     _VERBS[verb] = func
 
 
@@ -23,7 +21,6 @@ class Parser:
     }
 
     def parse(self, text: str) -> List[Tuple[str, str, str]]:
-        """Parse input into a list of (verb, noun, prep) commands."""
         commands = []
         text = text.lower().strip()
         for part in text.split(" and "):
@@ -59,7 +56,7 @@ class Room:
         self.exits = data["exits"]
         self.item_names = data.get("items", [])
         self.state = data.get("state", {"lit": True, "locked": False})
-        self.items: List[Item] = []  # populated later
+        self.items: List[Item] = []
 
 
 class Game:
@@ -86,17 +83,15 @@ class Game:
             self.rooms[room.id] = room
         self.player_room = 1
         self.inventory: List[Item] = []
-        self.locked_doors = {10: {"east": True}}  # door east of room10 locked
+        self.locked_doors = {10: {"east": True}}
         self.required_items = {"lamp": False, "key": False, "lockpick": False}
 
-    # Utility methods
     def current_room(self) -> Room:
         return self.rooms[self.player_room]
 
     def current_weight(self) -> int:
         return sum(item.weight for item in self.inventory)
 
-    # Command handlers
     def do_look(self, *_):
         room = self.current_room()
         print(f"Room {room.id}: {room.name}")
@@ -228,7 +223,6 @@ class Game:
             return
         new_room = room.exits[direction]
         self.player_room = new_room
-        # random thief event
         if self.inventory and random.random() < 0.1 and not self.thief_has_item:
             stolen = random.choice(self.inventory)
             self.inventory.remove(stolen)
@@ -248,7 +242,6 @@ class Game:
             self.do_look()
 
     def do_verbose(self, *_):
-        """Toggle verbose room descriptions."""
         self.verbose = not self.verbose
         print("Verbose" if self.verbose else "Brief")
 
