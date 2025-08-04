@@ -389,13 +389,13 @@ def main():
             print("Invalid auth token.")
             return
 
-    selection = input("Respond on channel 0, 1, 2, 3, or 'all'? ").strip().lower()
+    selection = input("Respond on channel 0, 1, 2, 3, 4, or 'all'? ").strip().lower()
     if selection == "all":
-        respond_channels = set(range(4))
+        respond_channels = set(range(5))
     else:
         try:
             idx = int(selection)
-            respond_channels = {idx} if 0 <= idx <= 3 else set()
+            respond_channels = {idx} if 0 <= idx <= 4 else set()
         except ValueError:
             respond_channels = set()
 
