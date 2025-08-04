@@ -28,8 +28,7 @@ logger = logging.getLogger(__name__)
 API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
 
 API_KEY = os.getenv("MESHTASTIC_API_KEY")
-if not API_KEY:
-    raise RuntimeError("MESHTASTIC_API_KEY environment variable required")
+
 MODEL_NAME = os.getenv(
     "MESHTASTIC_MODEL_NAME", "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 )
