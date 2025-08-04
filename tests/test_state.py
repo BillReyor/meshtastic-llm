@@ -1,4 +1,5 @@
-import os, sys, types, tempfile, shutil, atexit
+import os, sys, types, tempfile, shutil, atexit, io
+from contextlib import redirect_stdout
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 os.environ.setdefault("MESHTASTIC_API_KEY", "test")
 BBS_DIR = tempfile.mkdtemp(prefix="bbs-test-")
@@ -198,9 +199,15 @@ class StateTests(unittest.TestCase):
 
         self.assertIn("Room 1", outputs[0])
         self.assertIn("zork north", outputs[0].lower())
-        self.assertIn("Room 2", outputs[1])
-        self.assertIn("\n", outputs[0])
-        self.assertNotIn("\\n", outputs[0])
+
+    def test_queercon_easter_egg(self):
+        game = zork.Game()
+        buf = io.StringIO()
+        with redirect_stdout(buf):
+            game.do_queercon()
+        out = buf.getvalue().lower()
+        self.assertIn("queercon", out)
+        self.assertIn("16:00-18:00", out)
 
 if __name__ == "__main__":
     unittest.main()

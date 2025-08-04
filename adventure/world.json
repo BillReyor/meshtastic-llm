@@ -19,14 +19,15 @@
     {
       "id": 2,
       "name": "Abandoned Guardroom",
-      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A faded flyer on the wall advertises DEFCON 33.",
+      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A faded flyer on the wall advertises DEFCON 33. A rainbow sticker invites you to QueerCon mixers 16:00-18:00 at Chillout 2.",
       "exits": {
         "south": 8,
         "west": 1,
         "east": 3
       },
       "items": [
-        "key"
+        "key",
+        "queercon_flyer"
       ],
       "state": {
         "lit": true,
@@ -531,6 +532,12 @@
       "name": "defcon_badge",
       "weight": 1,
       "desc": "A shiny lanyard from DEFCON 33 that hums with hacker energy.",
+      "can_carry": true
+    },
+    "queercon_flyer": {
+      "name": "queercon_flyer",
+      "weight": 1,
+      "desc": "A vibrant QueerCon flyer inviting all to mixers and panels. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Everyone is welcome.",
       "can_carry": true
     },
     "ancient_crown": {
