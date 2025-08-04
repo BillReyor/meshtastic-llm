@@ -170,6 +170,8 @@ class StateTests(unittest.TestCase):
         self.assertIn("Room 1", outputs[0])
         self.assertIn("zork north", outputs[0].lower())
         self.assertIn("Room 2", outputs[1])
+        self.assertIn("\n", outputs[0])
+        self.assertNotIn("\\n", outputs[0])
 
 if __name__ == "__main__":
     unittest.main()
