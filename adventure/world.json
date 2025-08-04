@@ -374,7 +374,7 @@
     {
       "id": 24,
       "name": "Twisting Root Maze",
-      "desc": "Roots thicker than a man's thigh twist into an impossible labyrinth.",
+      "desc": "Roots thicker than a person's thigh twist into an impossible labyrinth.",
       "exits": {
         "north": 18,
         "south": 30,
