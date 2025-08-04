@@ -396,9 +396,7 @@ def main():
     signal.signal(signal.SIGTERM, shutdown)
 
     token_env = os.getenv("SMUDGE_CLI_TOKEN")
-    if not token_env:
-        print("SMUDGE_CLI_TOKEN not set; refusing to start.")
-        return
+
     user_token = getpass.getpass("CLI auth token: ")
     if not hmac.compare_digest(user_token, token_env):
         print("Invalid auth token.")
