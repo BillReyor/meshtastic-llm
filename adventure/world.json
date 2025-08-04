@@ -2,8 +2,8 @@
   "rooms": [
     {
       "id": 1,
-      "name": "Room 1",
-      "desc": "This is room 1.",
+      "name": "Dusty Entrance Hall",
+      "desc": "Faint sunlight filters through cracks in the collapsed ceiling, revealing scattered debris and faded tapestries.",
       "exits": {
         "south": 7,
         "east": 2
@@ -18,8 +18,8 @@
     },
     {
       "id": 2,
-      "name": "Room 2",
-      "desc": "This is room 2.",
+      "name": "Abandoned Guardroom",
+      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings.",
       "exits": {
         "south": 8,
         "west": 1,
@@ -35,8 +35,8 @@
     },
     {
       "id": 3,
-      "name": "Room 3",
-      "desc": "This is room 3.",
+      "name": "Forgotten Workshop",
+      "desc": "Workbenches sag under piles of broken gears and cracked glass jars.",
       "exits": {
         "south": 9,
         "west": 2,
@@ -52,8 +52,8 @@
     },
     {
       "id": 4,
-      "name": "Room 4",
-      "desc": "This is room 4.",
+      "name": "Gilded Vault",
+      "desc": "Gold leaf still clings to cracked frescoes. A heavy bronze gate bars further passage.",
       "exits": {
         "south": 10,
         "west": 3,
@@ -64,13 +64,13 @@
       ],
       "state": {
         "lit": true,
-        "locked": false
+        "locked": true
       }
     },
     {
       "id": 5,
-      "name": "Room 5",
-      "desc": "This is room 5.",
+      "name": "Scribe's Library",
+      "desc": "Towering shelves sag under the weight of moldy tomes; parchment scraps drift like leaves.",
       "exits": {
         "south": 11,
         "west": 4,
@@ -86,8 +86,8 @@
     },
     {
       "id": 6,
-      "name": "Room 6",
-      "desc": "This is room 6.",
+      "name": "Collapsed Stairwell",
+      "desc": "The stairwell drops into inky darkness, a cold draft rising from below.",
       "exits": {
         "south": 12,
         "west": 5
@@ -100,8 +100,8 @@
     },
     {
       "id": 7,
-      "name": "Room 7",
-      "desc": "This is room 7.",
+      "name": "Echoing Gallery",
+      "desc": "Towering statues flank the corridor, their faces worn smooth by time.",
       "exits": {
         "north": 1,
         "south": 13,
@@ -115,24 +115,26 @@
     },
     {
       "id": 8,
-      "name": "Room 8",
-      "desc": "This is room 8.",
+      "name": "Damp Crossroads",
+      "desc": "Moist air and dripping water echo through the intersecting tunnels.",
       "exits": {
         "north": 2,
         "south": 14,
         "west": 7,
         "east": 9
       },
-      "items": [],
+      "items": [
+        "oil_can"
+      ],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 9,
-      "name": "Room 9",
-      "desc": "This is room 9.",
+      "name": "Chasm Bridge",
+      "desc": "A narrow stone span crosses a seemingly bottomless chasm; pebbles rattle into the void.",
       "exits": {
         "north": 3,
         "south": 15,
@@ -147,8 +149,8 @@
     },
     {
       "id": 10,
-      "name": "Room 10",
-      "desc": "This is room 10.",
+      "name": "Shrine of Echoes",
+      "desc": "A circular chamber where every whisper returns amplified; candle stubs ring an obsidian altar.",
       "exits": {
         "north": 4,
         "south": 16,
@@ -163,8 +165,8 @@
     },
     {
       "id": 11,
-      "name": "Room 11",
-      "desc": "This is room 11.",
+      "name": "Hall of Whispers",
+      "desc": "Faint voices seem to drift along the walls, though none are present.",
       "exits": {
         "north": 5,
         "south": 17,
@@ -179,8 +181,8 @@
     },
     {
       "id": 12,
-      "name": "Room 12",
-      "desc": "This is room 12.",
+      "name": "Flooded Passage",
+      "desc": "Freezing water reaches your ankles and the ceiling dips uncomfortably low.",
       "exits": {
         "north": 6,
         "south": 18,
@@ -188,14 +190,14 @@
       },
       "items": [],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 13,
-      "name": "Room 13",
-      "desc": "This is room 13.",
+      "name": "Mushroom Grotto",
+      "desc": "Bioluminescent fungi paint the rock walls with soft blue green light.",
       "exits": {
         "north": 7,
         "south": 19,
@@ -209,15 +211,17 @@
     },
     {
       "id": 14,
-      "name": "Room 14",
-      "desc": "This is room 14.",
+      "name": "Glowing Fungus Field",
+      "desc": "A vast chamber carpeted with phosphorescent mushrooms that pulse gently.",
       "exits": {
         "north": 8,
         "south": 20,
         "west": 13,
         "east": 15
       },
-      "items": [],
+      "items": [
+        "silver_coin"
+      ],
       "state": {
         "lit": true,
         "locked": false
@@ -225,8 +229,8 @@
     },
     {
       "id": 15,
-      "name": "Room 15",
-      "desc": "This is room 15.",
+      "name": "Cavern of Roots",
+      "desc": "Thick roots hang like ropes, swaying in an unseen breeze.",
       "exits": {
         "north": 9,
         "south": 21,
@@ -241,8 +245,8 @@
     },
     {
       "id": 16,
-      "name": "Room 16",
-      "desc": "This is room 16.",
+      "name": "Crystal Cavern",
+      "desc": "Jagged crystals jut from every surface, casting prismatic reflections.",
       "exits": {
         "north": 10,
         "south": 22,
@@ -257,8 +261,8 @@
     },
     {
       "id": 17,
-      "name": "Room 17",
-      "desc": "This is room 17.",
+      "name": "Subterranean Dock",
+      "desc": "Rotten wooden planks hint at boats long since decayed.",
       "exits": {
         "north": 11,
         "south": 23,
@@ -273,8 +277,8 @@
     },
     {
       "id": 18,
-      "name": "Room 18",
-      "desc": "This is room 18.",
+      "name": "Blackwater Pool",
+      "desc": "A still, dark pool absorbs all light, its depth unknowable.",
       "exits": {
         "north": 12,
         "south": 24,
@@ -282,14 +286,14 @@
       },
       "items": [],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 19,
-      "name": "Room 19",
-      "desc": "This is room 19.",
+      "name": "Overgrown Armory",
+      "desc": "Vines snake around corroded suits of armor and shattered shields.",
       "exits": {
         "north": 13,
         "south": 25,
@@ -303,8 +307,8 @@
     },
     {
       "id": 20,
-      "name": "Room 20",
-      "desc": "This is room 20.",
+      "name": "Fallen Barracks",
+      "desc": "Rows of crumbling bunks line the walls; a faint scent of smoke lingers.",
       "exits": {
         "north": 14,
         "south": 26,
@@ -319,8 +323,8 @@
     },
     {
       "id": 21,
-      "name": "Room 21",
-      "desc": "This is room 21.",
+      "name": "Spore Choked Tunnel",
+      "desc": "Billowing clouds of yellow spores drift lazily in the stale air.",
       "exits": {
         "north": 15,
         "south": 27,
@@ -335,8 +339,8 @@
     },
     {
       "id": 22,
-      "name": "Room 22",
-      "desc": "This is room 22.",
+      "name": "Abyssal Gate",
+      "desc": "A titanic stone door engraved with warning sigils looms out of the darkness.",
       "exits": {
         "north": 16,
         "south": 28,
@@ -345,14 +349,14 @@
       },
       "items": [],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 23,
-      "name": "Room 23",
-      "desc": "This is room 23.",
+      "name": "Luminescent Marsh",
+      "desc": "Pools of glowing algae cast an eerie teal glow over spindly reeds.",
       "exits": {
         "north": 17,
         "south": 29,
@@ -367,8 +371,8 @@
     },
     {
       "id": 24,
-      "name": "Room 24",
-      "desc": "This is room 24.",
+      "name": "Twisting Root Maze",
+      "desc": "Roots thicker than a man's thigh twist into an impossible labyrinth.",
       "exits": {
         "north": 18,
         "south": 30,
@@ -376,14 +380,14 @@
       },
       "items": [],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 25,
-      "name": "Room 25",
-      "desc": "This is room 25.",
+      "name": "Bone Strewn Camp",
+      "desc": "Charred fire pits and scattered bones tell of an ill fated expedition.",
       "exits": {
         "north": 19,
         "east": 26
@@ -396,8 +400,8 @@
     },
     {
       "id": 26,
-      "name": "Room 26",
-      "desc": "This is room 26.",
+      "name": "Vault Antechamber",
+      "desc": "Smooth marble tiles lead to an imposing iron vault door fitted with intricate locks.",
       "exits": {
         "north": 20,
         "west": 25,
@@ -406,19 +410,21 @@
       "items": [],
       "state": {
         "lit": true,
-        "locked": false
+        "locked": true
       }
     },
     {
       "id": 27,
-      "name": "Room 27",
-      "desc": "This is room 27.",
+      "name": "Old Rope Bridge",
+      "desc": "A frayed rope bridge spans a gap; each plank creaks underfoot.",
       "exits": {
         "north": 21,
         "west": 26,
         "east": 28
       },
-      "items": [],
+      "items": [
+        "rope"
+      ],
       "state": {
         "lit": true,
         "locked": false
@@ -426,8 +432,8 @@
     },
     {
       "id": 28,
-      "name": "Room 28",
-      "desc": "This is room 28.",
+      "name": "Ghastly Rift",
+      "desc": "A cold wind howls through a jagged fissure that swallows light.",
       "exits": {
         "north": 22,
         "west": 27,
@@ -435,14 +441,14 @@
       },
       "items": [],
       "state": {
-        "lit": true,
+        "lit": false,
         "locked": false
       }
     },
     {
       "id": 29,
-      "name": "Room 29",
-      "desc": "This is room 29.",
+      "name": "Hunger Den",
+      "desc": "Scratch marks gouge the walls; the scent of damp fur lingers.",
       "exits": {
         "north": 23,
         "west": 28,
@@ -456,16 +462,18 @@
     },
     {
       "id": 30,
-      "name": "Room 30",
-      "desc": "This is room 30.",
+      "name": "Sealed Treasury",
+      "desc": "Massive stone slabs interlock seamlessly, hiding whatever lies beyond.",
       "exits": {
         "north": 24,
         "west": 29
       },
-      "items": [],
+      "items": [
+        "ancient_crown"
+      ],
       "state": {
-        "lit": true,
-        "locked": false
+        "lit": false,
+        "locked": true
       }
     }
   ],
@@ -473,31 +481,55 @@
     "lamp": {
       "name": "lamp",
       "weight": 1,
-      "desc": "An old oil lamp",
+      "desc": "An old brass oil lamp. It feels empty.",
       "can_carry": true
     },
     "key": {
       "name": "key",
       "weight": 1,
-      "desc": "A small brass key",
+      "desc": "A small brass key engraved with a sun symbol.",
       "can_carry": true
     },
     "lockpick": {
       "name": "lockpick",
       "weight": 1,
-      "desc": "A makeshift lockpick",
+      "desc": "A bent hairpin - crude but serviceable for simple locks.",
       "can_carry": true
     },
     "treasure": {
       "name": "treasure",
       "weight": 5,
-      "desc": "Shiny treasure",
+      "desc": "A heap of glittering coins and gemstones.",
       "can_carry": true
     },
     "scroll": {
       "name": "scroll",
       "weight": 1,
-      "desc": "A mysterious scroll",
+      "desc": "A brittle scroll covered in faded runes. Perhaps it holds a clue.",
+      "can_carry": true
+    },
+    "oil_can": {
+      "name": "oil_can",
+      "weight": 1,
+      "desc": "A small tin of lamp oil, half full.",
+      "can_carry": true
+    },
+    "silver_coin": {
+      "name": "silver_coin",
+      "weight": 1,
+      "desc": "An ancient silver coin stamped with a forgotten monarch.",
+      "can_carry": true
+    },
+    "rope": {
+      "name": "rope",
+      "weight": 3,
+      "desc": "A sturdy length of rope - looks reliable.",
+      "can_carry": true
+    },
+    "ancient_crown": {
+      "name": "ancient_crown",
+      "weight": 5,
+      "desc": "A jewel encrusted crown radiating silent authority.",
       "can_carry": true
     }
   }
