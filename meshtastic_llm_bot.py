@@ -36,9 +36,9 @@ MODEL_NAME = os.getenv(
 )
 
 SYSTEM_PROMPT = (
-    "You're Goon (Rae 'Ray' McKinnon), a caffeinated hacker in a neon Vegas motel near DEF CON 33."
+    "You're Cipher (Rae 'Ray' McKinnon), a caffeinated hacker in a neon Vegas motel near DEF CON 33."
     " Circuit boards and pride flags clutter the walls; Red Bull cans tower like logs."
-    " Answer only when pinged as 'Goon.' Replies stay razor sharp, under 20 words, no more than two sentences."
+    " Answer only when pinged as 'Cipher.' Replies stay razor sharp, under 20 words, no more than two sentences."
     " Celebrate queer hackers; no slurs or mocking identity."
     " Default to they/them pronouns unless someone states otherwise."
     " Toss in bogus hashes or gibberish errors for flair."
@@ -63,7 +63,7 @@ MAX_TEXT_LEN = 1024
 MAX_LOC_LEN = 256
 
 CONVO_TIMEOUT = 120
-HANDLE_RE = re.compile(r"\bgoon\b", re.IGNORECASE)
+HANDLE_RE = re.compile(r"\bcipher\b", re.IGNORECASE)
 FORBIDDEN_PROMPTS = ("assistant:", "system:", "```")
 
 MENU = (
@@ -78,9 +78,9 @@ MENU = (
     "- anything else: chat with the language model"
 )
 DEFAULT_LOCATION = "San Francisco"
-HELLO_MESSAGES = ["Yo.", "Hey all.", "Goon here."]
+HELLO_MESSAGES = ["Yo.", "Hey all.", "Cipher here."]
 BOOT_MESSAGE = (
-    "DM me or say 'goon' if you expect a reply. "
+    "DM me or say 'cipher' if you expect a reply. "
     "I remember the thread for about two minutes.\n"
 ) + MENU
 GREET_INTERVAL = 4 * 3600
@@ -232,7 +232,7 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
 
 def handle_message(target: int, text: str, iface, is_channel=False, user=None):
     text = safe_text(text)
-    text = re.sub(r"^\s*goon[:,]?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(r"^\s*cipher[:,]?\s*", "", text, flags=re.IGNORECASE)
     lower = text.lower()
 
     if lower.startswith("bbs"):
@@ -401,17 +401,17 @@ def greeting_loop(iface):
 def main():
     global respond_channels
 
-    token_env = os.getenv("GOON_CLI_TOKEN")
+    token_env = os.getenv("CIPHER_CLI_TOKEN")
     if token_env:
         user_token = getpass.getpass("CLI auth token: ")
         if not hmac.compare_digest(user_token, token_env):
             print("Invalid auth token.")
             return
 
-    selection_env = os.getenv("GOON_CHANNELS")
+    selection_env = os.getenv("CIPHER_CHANNELS")
     if selection_env is None:
         selection = input("Respond on channel 0, 1, 2, 3, 4, or 'all'? ").strip().lower()
-        os.environ["GOON_CHANNELS"] = selection
+        os.environ["CIPHER_CHANNELS"] = selection
     else:
         selection = selection_env.strip().lower()
     if selection == "all":
@@ -441,9 +441,9 @@ def main():
     pub.subscribe(on_receive, "meshtastic.receive.text")
     if respond_channels:
         chs = ", ".join(str(c) for c in sorted(respond_channels))
-        print(f"Meshtastic ↔️ Goon ready. DMs or channel(s) {chs}")
+        print(f"Meshtastic ↔️ Cipher ready. DMs or channel(s) {chs}")
     else:
-        print("Meshtastic ↔️ Goon ready. DMs only")
+        print("Meshtastic ↔️ Cipher ready. DMs only")
     if not NO_BOOT:
         print(BOOT_MESSAGE)
         hello = random.choice(HELLO_MESSAGES)
