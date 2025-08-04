@@ -99,7 +99,7 @@ class Game:
     # Command handlers
     def do_look(self, *_):
         room = self.current_room()
-        print(room.name)
+        print(f"Room {room.id}: {room.name}")
         if self.verbose or room.state.get("first", True):
             print(room.desc)
             room.state["first"] = False
@@ -199,6 +199,10 @@ class Game:
         if noun == "scroll":
             print("The scroll reveals a secret: score +5!")
             self.score += 5
+            return
+        if noun == "defcon_badge":
+            print("You flash your DEFCON 33 badge. Somewhere, a modem dials up. Score +33!")
+            self.score += 33
             return
         print("Nothing happens.")
 
