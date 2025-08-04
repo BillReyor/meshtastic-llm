@@ -1,4 +1,5 @@
 import os, sys, types
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 os.environ.setdefault("MESHTASTIC_API_KEY", "test")
 
 meshtastic_stub = types.ModuleType("meshtastic")
@@ -40,6 +41,11 @@ class StateTests(unittest.TestCase):
         self.assertFalse(bot.is_addressed("hello", False, channel, peer))
         self.assertTrue(bot.is_addressed("hey smudge", False, channel, peer))
 
+    def test_is_addressed_weather(self):
+        peer = 1
+        channel = 0
+        self.assertTrue(bot.is_addressed("weather Paris", False, channel, peer))
+
     def test_weather_command_with_handle(self):
         outputs = {}
 
@@ -65,6 +71,26 @@ class StateTests(unittest.TestCase):
 
         self.assertEqual(outputs.get("loc"), "Paris")
         self.assertEqual(outputs.get("reply"), "Weather for Paris")
+
+    def test_get_weather_uses_fahrenheit(self):
+        called = {}
+
+        class DummyResp:
+            status_code = 200
+            text = "Weather"
+
+        def fake_get(url, timeout=0, verify=True, allow_redirects=False):
+            called["url"] = url
+            return DummyResp()
+
+        orig_get = bot.requests.get
+        bot.requests.get = fake_get
+        try:
+            bot.get_weather("Vegas")
+        finally:
+            bot.requests.get = orig_get
+
+        self.assertIn("format=3&u", called.get("url", ""))
 
 if __name__ == "__main__":
     unittest.main()

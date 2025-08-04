@@ -200,7 +200,7 @@ def send_chunked_text(text: str, target: int, iface, channel=False):
 def get_weather(loc: str = "") -> str:
     try:
         loc = safe_text(loc, MAX_LOC_LEN)
-        url = f"https://wttr.in/{quote_plus(loc) if loc else ''}?format=3"
+        url = f"https://wttr.in/{quote_plus(loc) if loc else ''}?format=3&u"
         r = requests.get(url, timeout=5, verify=True, allow_redirects=False)
         if r.status_code == 200:
             return r.text.strip()
@@ -217,7 +217,11 @@ def mark_addressed(channel_id: int, user: int):
 def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
     if direct:
         return True
+    lower = text.lower()
     now = time.time()
+    if lower.startswith("weather"):
+        mark_addressed(channel_id, user)
+        return True
     if HANDLE_RE.search(text):
         mark_addressed(channel_id, user)
         return True
