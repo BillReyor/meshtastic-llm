@@ -25,9 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ─── CONFIG ────────────────────────────────────────────────────────────────────
-API_BASE = os.getenv("MESHTASTIC_API_BASE", "https://localhost:1234/v1")
-if not API_BASE.startswith("https://"):
-    raise ValueError("MESHTASTIC_API_BASE must start with https://")
+API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
 
 API_KEY = os.getenv("MESHTASTIC_API_KEY")
 if not API_KEY:
