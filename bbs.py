@@ -1,10 +1,13 @@
 import json
+import logging
 import os
 import tempfile
 import threading
 from typing import Dict, List
 
 from utils.text import MAX_TEXT_LEN, safe_text
+
+logger = logging.getLogger(__name__)
 BBS_DIR = os.path.abspath(os.getenv("MESHTASTIC_BBS_DIR", "bbs_data"))
 os.makedirs(BBS_DIR, exist_ok=True, mode=0o700)
 try:
@@ -33,17 +36,27 @@ def _save_board(target: int, board: List[str]) -> None:
     fd, tmp_path = tempfile.mkstemp(dir=BBS_DIR)
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
-            json.dump(board, f)
-        os.replace(tmp_path, path)
+            try:
+                json.dump(board, f)
+            except OSError as e:
+                logger.error("Failed to write board %s: %s", tmp_path, e)
+                return
+        try:
+            os.replace(tmp_path, path)
+        except OSError as e:
+            logger.error("Failed to replace %s with %s: %s", path, tmp_path, e)
+            return
         try:
             os.chmod(path, 0o600)
-        except OSError:
-            pass
+        except OSError as e:
+            logger.error("Failed to chmod %s: %s", path, e)
     finally:
         try:
             os.unlink(tmp_path)
         except FileNotFoundError:
             pass
+        except OSError as e:
+            logger.error("Failed to remove temp file %s: %s", tmp_path, e)
 
 
 bbs_posts: Dict[int, List[str]] = {}
