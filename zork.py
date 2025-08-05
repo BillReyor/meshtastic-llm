@@ -46,6 +46,6 @@ def handle_zork(target: int, command: str, iface, is_channel: bool, user: int | 
                         game.run_command(verb, noun, prep)
                 reply = buf.getvalue().strip() or "..."
 
-    safe_reply = safe_text(reply, MAX_TEXT_LEN)
+    safe_reply = safe_text(reply)[:MAX_TEXT_LEN]
     log_message("OUT", target, safe_reply, channel=is_channel)
-    send_chunked_text(reply, target, iface, channel=is_channel)
+    send_chunked_text(safe_reply, target, iface, channel=is_channel)
