@@ -167,9 +167,14 @@ def split_into_chunks(text: str, size: int):
 
 def send_chunked_text(text: str, target: int, iface, channel=False):
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
-    chunks = list(split_into_chunks(text, size - 10))
-    total = len(chunks)
-    for i, chunk in enumerate(chunks, 1):
+    prefix_len = len("[1/1] ")
+    while True:
+        total = sum(1 for _ in split_into_chunks(text, size - prefix_len))
+        new_prefix_len = len(f"[{total}/{total}] ")
+        if new_prefix_len == prefix_len:
+            break
+        prefix_len = new_prefix_len
+    for i, chunk in enumerate(split_into_chunks(text, size - prefix_len), 1):
         time.sleep(random.uniform(DELAY_MIN, DELAY_MAX))
         chunk = f"[{i}/{total}] {chunk}"
         if channel:
