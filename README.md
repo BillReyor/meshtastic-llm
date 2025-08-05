@@ -1,6 +1,6 @@
 # Meshtastic LLM Bot
 
-This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and for messages on user-chosen channel(s) 0–4 (or all), replying with completions from the selected model and occasionally posting a hacker-themed note to those channels.
+This repository contains a small Python script that bridges a local language model running in LM Studio with a Meshtastic radio. It listens for direct messages and for messages on user-chosen channel(s) 0–4 (or all), replying with completions from the selected model and occasionally posting a hacker-themed note to those channels. 
 
 ## Requirements
 
