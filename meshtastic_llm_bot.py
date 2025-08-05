@@ -19,6 +19,7 @@ from meshtastic.serial_interface import SerialInterface
 from weather import get_weather
 from bbs import handle_bbs, bbs_posts
 from zork import handle_zork
+from utils.text import MAX_TEXT_LEN, MAX_LOC_LEN, safe_text
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -59,8 +60,6 @@ LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
 
 MAX_PACKET_CHARS = 1024
-MAX_TEXT_LEN = 1024
-MAX_LOC_LEN = 256
 
 CONVO_TIMEOUT = 120
 HANDLE_RE = re.compile(r"\bcipher\b", re.IGNORECASE)
@@ -115,14 +114,8 @@ class BoundedExecutor:
 executor = BoundedExecutor(MAX_WORKERS, MAX_QUEUE_SIZE)
 respond_channels: set[int] = set()
 
-
-def safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
-    s = s.replace("\r", "\\r").replace("\n", "\\n")
-    return s[:max_len]
-
-
 def log_message(direction: str, target: int, message: str, channel: bool = False):
-    message = safe_text(message)
+    message = safe_text(message, MAX_TEXT_LEN)
     date_str = datetime.date.today().isoformat()
     logfile = os.path.join(LOG_DIR, f"{date_str}.log")
     with open(logfile, "a", encoding="utf-8") as f:
@@ -140,7 +133,7 @@ def record_message(peer: int, role: str, content: str):
         hist = histories.setdefault(peer, [])
         if not hist or hist[0]["role"] != "system":
             hist.insert(0, {"role": "system", "content": SYSTEM_PROMPT})
-        hist.append({"role": role, "content": safe_text(content)})
+        hist.append({"role": role, "content": safe_text(content, MAX_TEXT_LEN)})
         if len(hist) > MAX_HISTORY_LEN + 1:
             hist = hist[-(MAX_HISTORY_LEN + 1):]
         total_chars = sum(len(m["content"]) for m in hist[1:])
@@ -230,7 +223,7 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
 
 
 def handle_message(target: int, text: str, iface, is_channel=False, user=None):
-    text = safe_text(text)
+    text = safe_text(text, MAX_TEXT_LEN)
     text = re.sub(r"^\s*cipher[:,]?\s*", "", text, flags=re.IGNORECASE)
     lower = text.lower()
 
@@ -307,7 +300,7 @@ def handle_message(target: int, text: str, iface, is_channel=False, user=None):
     finally:
         del payload
 
-    reply = safe_text(reply)
+    reply = safe_text(reply, MAX_TEXT_LEN)
     record_message(target, "assistant", reply)
     log_message("OUT", target, reply, channel=is_channel)
     send_chunked_text(reply, target, iface, channel=is_channel)
@@ -343,7 +336,7 @@ def on_receive(packet=None, interface=None, **kwargs):
         except UnicodeEncodeError:
             logger.warning("drop malformed packet from %s", pkt.get("from"))
             return
-        text = safe_text(text)
+        text = safe_text(text, MAX_TEXT_LEN)
         logger.debug(
             "chan_raw=%s parsed=%s to=%s from=%s text='%s'",
             chan_info,
