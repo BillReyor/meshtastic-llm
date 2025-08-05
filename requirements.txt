@@ -1,3 +1,5 @@
 meshtastic==2.2.15
 pypubsub==4.0.3
-requests==2.31.0
+# Update requests to address .netrc credential leak and session verification issues
+# See: https://github.com/psf/requests/releases/tag/v2.32.3
+requests==2.32.3
