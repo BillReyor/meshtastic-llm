@@ -1,2 +1,3 @@
-from .game import Game, register_verb
-__all__ = ["Game", "register_verb"]
+from .game import Game
+
+__all__ = ["Game"]

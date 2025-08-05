@@ -1,13 +1,7 @@
 import json
 import os
 import random
-from typing import Dict, List, Tuple, Callable
-
-_VERBS: Dict[str, Callable] = {}
-
-
-def register_verb(verb: str, func: Callable):
-    _VERBS[verb] = func
+from typing import Dict, List, Tuple
 
 
 class Parser:
@@ -256,7 +250,7 @@ class Game:
         if verb in ("north", "south", "east", "west", "up", "down"):
             self.do_move(verb)
             return
-        func = getattr(self, f"do_{verb}", None) or _VERBS.get(verb)
+        func = getattr(self, f"do_{verb}", None)
         if func:
             func(noun, prep)
         else:
