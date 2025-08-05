@@ -79,6 +79,14 @@ class Game:
         self.inventory: List[Item] = []
         self.locked_doors = {10: {"east": True}}
         self.required_items = {"lamp": False, "key": False, "lockpick": False}
+        self.use_actions = {
+            ("lamp", ""): self._use_lamp,
+            ("key", "door"): self.unlock_door,
+            ("lockpick", "door"): self.unlock_door,
+            ("scroll", ""): self._use_scroll,
+            ("defcon_badge", ""): self._use_defcon_badge,
+            ("queercon_flyer", ""): self._use_queercon_flyer,
+        }
 
     def current_room(self) -> Room:
         return self.rooms[self.player_room]
@@ -175,29 +183,31 @@ class Game:
         print("Restored.")
 
     def do_use(self, noun, prep, *_):
-        if noun == "lamp":
-            self.required_items["lamp"] = True
-            print("The lamp is now lit.")
-            return
-        if noun == "key" and prep == "door":
-            self.unlock_door()
-            return
-        if noun == "lockpick" and prep == "door":
-            self.unlock_door()
-            return
-        if noun == "scroll":
-            print("The scroll reveals a secret: score +5!")
-            self.score += 5
-            return
-        if noun == "defcon_badge":
-            print("You flash your DEFCON 33 badge. A holographic unicorn invites you to QueerCon's mixers at Chillout 2 (16:00-18:00 Thu-Sat). Score +33!")
-            self.score += 33
-            return
-        if noun == "queercon_flyer":
-            print("The flyer details QueerCon, a con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Score +5!")
-            self.score += 5
-            return
-        print("Nothing happens.")
+        action = self.use_actions.get((noun, prep))
+        if action:
+            action()
+        else:
+            print("Nothing happens.")
+
+    def _use_lamp(self):
+        self.required_items["lamp"] = True
+        print("The lamp is now lit.")
+
+    def _use_scroll(self):
+        print("The scroll reveals a secret: score +5!")
+        self.score += 5
+
+    def _use_defcon_badge(self):
+        print(
+            "You flash your DEFCON 33 badge. A holographic unicorn invites you to QueerCon's mixers at Chillout 2 (16:00-18:00 Thu-Sat). Score +33!"
+        )
+        self.score += 33
+
+    def _use_queercon_flyer(self):
+        print(
+            "The flyer details QueerCon, a con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Score +5!"
+        )
+        self.score += 5
 
     def unlock_door(self):
         if not self.locked_doors.get(10, {}).get("east"):
