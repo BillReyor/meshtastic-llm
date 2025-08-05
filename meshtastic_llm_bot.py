@@ -11,6 +11,7 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
+from typing import Optional, cast
 
 import requests
 from pubsub import pub
@@ -165,7 +166,39 @@ def split_into_chunks(text: str, size: int):
         text = text[split_point:].lstrip()
 
 
-def send_chunked_text(text: str, target: int, iface, channel=False):
+def send_chunked_text(
+    text: str,
+    target: int,
+    iface: SerialInterface,
+    channel: bool = False,
+) -> None:
+    """Send a text message in multiple packets if necessary.
+
+    Parameters
+    ----------
+    text:
+        The message to transmit. It will be split into chunks that fit within the
+        Meshtastic payload limits.
+    target:
+        The node ID or channel index to which the message should be delivered.
+    iface:
+        The :class:`~meshtastic.serial_interface.SerialInterface` used for
+        communication.
+    channel:
+        ``True`` if ``target`` represents a channel index rather than a peer node.
+
+    Side Effects
+    ------------
+    Introduces delays between chunk transmissions, sends packets over the radio
+    and logs warnings when acknowledgements fail.
+
+    Thread Safety
+    -------------
+    This function performs no internal synchronisation; callers must ensure that
+    the provided ``iface`` is used in a thread-safe manner when invoked from
+    multiple threads.
+    """
+
     size = CHANNEL_CHUNK_BYTES if channel else CHUNK_BYTES
     prefix_len = len("[1/1] ")
     while True:
@@ -191,7 +224,7 @@ def send_chunked_text(text: str, target: int, iface, channel=False):
                     time.sleep(RETRY_DELAY)
 
 
-def reset_script(iface):
+def reset_script(iface: SerialInterface) -> None:
     iface.close()
     executor.shutdown(wait=False)
     args = [a for a in sys.argv if a != "--no-boot"]
@@ -227,7 +260,42 @@ def is_addressed(text: str, direct: bool, channel_id: int, user: int) -> bool:
     return False
 
 
-def handle_message(target: int, text: str, iface, is_channel=False, user=None):
+def handle_message(
+    target: int,
+    text: str,
+    iface: SerialInterface,
+    is_channel: bool = False,
+    user: Optional[int] = None,
+) -> None:
+    """Handle an incoming user message and send an appropriate reply.
+
+    Parameters
+    ----------
+    target:
+        Destination node ID or channel index for the response.
+    text:
+        Raw message content from the user.
+    iface:
+        The :class:`~meshtastic.serial_interface.SerialInterface` used to send
+        replies or perform a reset.
+    is_channel:
+        ``True`` when the message was received on a channel rather than via
+        direct message.
+    user:
+        Identifier of the originating user, used for conversation state.
+
+    Side Effects
+    ------------
+    Persists conversation history, performs network requests to the language
+    model API, logs all interactions and may reboot the script when requested.
+
+    Thread Safety
+    -------------
+    Intended to be executed within worker threads. Global state is protected by
+    locks where necessary, but the supplied ``iface`` must be thread-safe if
+    used concurrently.
+    """
+
     text = safe_text(text, MAX_TEXT_LEN)
     text = re.sub(r"^\s*cipher[:,]?\s*", "", text, flags=re.IGNORECASE)
     lower = text.lower()
@@ -311,10 +379,14 @@ def handle_message(target: int, text: str, iface, is_channel=False, user=None):
     send_chunked_text(reply, target, iface, channel=is_channel)
 
 
-def on_receive(packet=None, interface=None, **kwargs):
+def on_receive(
+    packet: Optional[dict] = None,
+    interface: Optional[SerialInterface] = None,
+    **kwargs,
+) -> None:
     try:
         pkt = packet or {}
-        iface = interface
+        iface = cast(SerialInterface, interface)
         chan_info = pkt.get("channel")
         if isinstance(chan_info, dict):
             channel = chan_info.get("index")
@@ -330,7 +402,7 @@ def on_receive(packet=None, interface=None, **kwargs):
         try:
             channel = int(channel)
         except (TypeError, ValueError):
-            channel = None
+            channel = 0
         to = pkt.get("to")
         text = pkt.get("decoded", {}).get("text", "").strip()
         if len(text) > MAX_PACKET_CHARS:
@@ -365,7 +437,7 @@ def on_receive(packet=None, interface=None, **kwargs):
             )
             return
 
-        src = pkt.get("from")
+        src = cast(int, pkt.get("from"))
         if src == iface.myInfo.my_node_num:
             logger.debug("ignoring own message")
             return
@@ -385,7 +457,7 @@ def on_receive(packet=None, interface=None, **kwargs):
         logger.warning("Error in on_receive: %s", e)
 
 
-def greeting_loop(iface):
+def greeting_loop(iface: SerialInterface) -> None:
     while True:
         delay = GREET_INTERVAL + random.uniform(-GREET_JITTER, GREET_JITTER)
         time.sleep(max(0, delay))
