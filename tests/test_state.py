@@ -200,6 +200,39 @@ class StateTests(unittest.TestCase):
         self.assertIn("Room 1", outputs[0])
         self.assertIn("zork north", outputs[0].lower())
 
+    def test_zork_output_sanitized(self):
+        outputs = []
+
+        def fake_send(text, target, iface, channel=False):
+            outputs.append(text)
+
+        orig_send = bot.send_chunked_text
+        orig_log = bot.log_message
+        orig_game = zork.Game
+
+        long_room = "start\n" + "x" * (bot.MAX_TEXT_LEN + 50)
+
+        class DummyGame:
+            def do_look(self):
+                print(long_room)
+
+        zork.Game = DummyGame
+        bot.send_chunked_text = fake_send
+        bot.log_message = lambda *a, **k: None
+        try:
+            bot.handle_message(0, "zork start", object(), True, user=42)
+        finally:
+            bot.send_chunked_text = orig_send
+            bot.log_message = orig_log
+            zork.Game = orig_game
+            zork.games.clear()
+
+        self.assertTrue(outputs)
+        self.assertNotIn("\n", outputs[0])
+        self.assertNotIn("\r", outputs[0])
+        self.assertIn("\\n", outputs[0])
+        self.assertEqual(len(outputs[0]), bot.MAX_TEXT_LEN)
+
     def test_queercon_easter_egg(self):
         game = zork.Game()
         buf = io.StringIO()
