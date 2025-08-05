@@ -4,19 +4,13 @@ import tempfile
 import threading
 from typing import Dict, List
 
-
-MAX_TEXT_LEN = 1024
+from utils.text import MAX_TEXT_LEN, safe_text
 BBS_DIR = os.path.abspath(os.getenv("MESHTASTIC_BBS_DIR", "bbs_data"))
 os.makedirs(BBS_DIR, exist_ok=True, mode=0o700)
 try:
     os.chmod(BBS_DIR, 0o700)
 except OSError:
     pass
-
-
-def _safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
-    return s.replace("\r", "\\r").replace("\n", "\\n")[:max_len]
-
 
 def _board_path(target: int) -> str:
     return os.path.join(BBS_DIR, f"{target}.json")
@@ -90,7 +84,7 @@ def handle_bbs(
                 reply = "Usage: bbs read <n>"
         else:
             content = command[5:].strip() if command.startswith("post ") else command
-            content = _safe_text(content)
+            content = safe_text(content, MAX_TEXT_LEN)
             entry = f"{user}: {content}" if user is not None else content
             board.append(entry)
             _save_board(target, board)

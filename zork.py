@@ -4,13 +4,7 @@ from contextlib import redirect_stdout
 from typing import Dict
 
 from adventure import Game
-
-MAX_TEXT_LEN = 1024
-
-
-def _safe_text(s: str, max_len: int = MAX_TEXT_LEN) -> str:
-    return s.replace("\r", "\\r").replace("\n", "\\n")[:max_len]
-
+from utils.text import MAX_TEXT_LEN, safe_text
 
 games: Dict[int, Game] = {}
 _games_lock = threading.Lock()
@@ -52,6 +46,6 @@ def handle_zork(target: int, command: str, iface, is_channel: bool, user: int | 
                         game.run_command(verb, noun, prep)
                 reply = buf.getvalue().strip() or "..."
 
-    safe_reply = _safe_text(reply)
+    safe_reply = safe_text(reply, MAX_TEXT_LEN)
     log_message("OUT", target, safe_reply, channel=is_channel)
     send_chunked_text(reply, target, iface, channel=is_channel)
