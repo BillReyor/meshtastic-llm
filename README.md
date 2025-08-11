@@ -28,7 +28,9 @@ they work together.
 python meshtastic_llm_bot.py
 ```
 
-When started, the program prompts for which channel(s) (0–4 or *all*) it should respond on. It always answers direct messages. The bot sends back the LLM's response in numbered chunks, prefixed like `[1/3]`, for easy ordering and occasionally broadcasts a random hacker message for users to reply to on the selected channels.
+When started, the program first asks which **soul** profile to load. Souls live in the `souls/` directory as JSON files and define the bot's name, system prompt, and greetings. Add new personalities by dropping additional JSON files into that folder.
+
+After selecting a soul, the program prompts for which channel(s) (0–4 or *all*) it should respond on. It always answers direct messages. The bot sends back the LLM's response in numbered chunks, prefixed like `[1/3]`, for easy ordering and occasionally broadcasts a random hacker message for users to reply to on the selected channels.
 
 ### Commands
 
