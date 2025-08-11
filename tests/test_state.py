@@ -234,14 +234,14 @@ class StateTests(unittest.TestCase):
         self.assertIn("\\n", outputs[0])
         self.assertEqual(len(outputs[0]), bot.MAX_TEXT_LEN)
 
-    def test_queercon_easter_egg(self):
+    def test_hope_easter_egg(self):
         game = zork.Game()
         buf = io.StringIO()
         with redirect_stdout(buf):
-            game.do_queercon()
+            game.do_hope()
         out = buf.getvalue().lower()
-        self.assertIn("queercon", out)
-        self.assertIn("16:00-18:00", out)
+        self.assertIn("hackers on planet earth", out)
+        self.assertIn("workshops", out)
 
 if __name__ == "__main__":
     unittest.main()

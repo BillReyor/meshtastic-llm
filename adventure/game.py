@@ -84,8 +84,8 @@ class Game:
             ("key", "door"): self.unlock_door,
             ("lockpick", "door"): self.unlock_door,
             ("scroll", ""): self._use_scroll,
-            ("defcon_badge", ""): self._use_defcon_badge,
-            ("queercon_flyer", ""): self._use_queercon_flyer,
+            ("hope_badge", ""): self._use_hope_badge,
+            ("hope_schedule", ""): self._use_hope_schedule,
         }
 
     def current_room(self) -> Room:
@@ -197,15 +197,15 @@ class Game:
         print("The scroll reveals a secret: score +5!")
         self.score += 5
 
-    def _use_defcon_badge(self):
+    def _use_hope_badge(self):
         print(
-            "You flash your DEFCON 33 badge. A holographic unicorn invites you to QueerCon's mixers at Chillout 2 (16:00-18:00 Thu-Sat). Score +33!"
+            "You flash your HOPE 16 badge. A volunteer hands you a zine on lock-picking. Score +16!"
         )
-        self.score += 33
+        self.score += 16
 
-    def _use_queercon_flyer(self):
+    def _use_hope_schedule(self):
         print(
-            "The flyer details QueerCon, a con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Score +5!"
+            "The schedule lists talks, workshops, and villages running day and night. Score +5!"
         )
         self.score += 5
 
@@ -249,8 +249,8 @@ class Game:
         self.verbose = not self.verbose
         print("Verbose" if self.verbose else "Brief")
 
-    def do_queercon(self, *_):
-        print("QueerCon is DEFCON's con-within-a-con for LGBTQ+ hackers and allies. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Everyone is welcome!")
+    def do_hope(self, *_):
+        print("HOPE (Hackers On Planet Earth) is an annual hacker con blending tech, activism, and art. Workshops, villages, and performances run day and night. Everyone is welcome!")
 
     def unknown(self, verb, *_):
         print(f"I don't know the word '{verb}'; try LOOK or EXAMINE")
