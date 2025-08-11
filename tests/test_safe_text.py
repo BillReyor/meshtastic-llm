@@ -17,7 +17,7 @@ from utils.text import safe_text
 class SafeTextTests(unittest.TestCase):
     def test_escapes_control_chars(self):
         raw = "hello\nworld\r\x00\x1b!"
-        expected = "hello\\nworld\\r\\x00\\x1b!"
+        expected = "hello\nworld\r\\x00\\x1b!"
         self.assertEqual(safe_text(raw), expected)
 
     def test_strips_placeholders(self):

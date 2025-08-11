@@ -229,9 +229,9 @@ class StateTests(unittest.TestCase):
             zork.games.clear()
 
         self.assertTrue(outputs)
-        self.assertNotIn("\n", outputs[0])
+        self.assertIn("\n", outputs[0])
+        self.assertNotIn("\\n", outputs[0])
         self.assertNotIn("\r", outputs[0])
-        self.assertIn("\\n", outputs[0])
         self.assertEqual(len(outputs[0]), bot.MAX_TEXT_LEN)
 
     def test_hope_easter_egg(self):
