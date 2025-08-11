@@ -409,6 +409,7 @@ def handle_message(
         )
         r.raise_for_status()
         reply = r.json()["choices"][0]["message"]["content"].strip()
+        reply = re.sub(r'\s*\[USER_DATA\]\s*', ' ', reply).strip()
     except requests.HTTPError as e:
         status = e.response.status_code if e.response else "unknown"
         detail = e.response.text.strip() if e.response else str(e)
