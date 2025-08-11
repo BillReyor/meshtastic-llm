@@ -39,7 +39,11 @@ def load_soul() -> dict:
     souls = sorted(SOULS_DIR.glob("*.json"))
     if not souls:
         raise FileNotFoundError(f"No soul files found in {SOULS_DIR}")
-    if sys.stdin.isatty():
+
+    soul_name = os.getenv("MESHTASTIC_SOUL")
+    if soul_name:
+        path = SOULS_DIR / f"{soul_name}.json"
+    elif sys.stdin.isatty():
         print("Available souls:")
         for i, path in enumerate(souls, 1):
             print(f"{i}: {path.stem}")
@@ -51,6 +55,9 @@ def load_soul() -> dict:
             print("Invalid selection.")
     else:
         path = souls[0]
+
+    if not path.exists():
+        raise FileNotFoundError(f"Soul file {path} not found")
     with open(path, encoding="utf-8") as f:
         data = json.load(f)
     if sys.stdin.isatty():

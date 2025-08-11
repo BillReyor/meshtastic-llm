@@ -3,6 +3,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 os.environ.setdefault("MESHTASTIC_API_KEY", "test")
+os.environ.setdefault("MESHTASTIC_SOUL", "cipher")
 
 BBS_DIR = tempfile.mkdtemp(prefix="bbs-test-")
 os.environ["MESHTASTIC_BBS_DIR"] = BBS_DIR
