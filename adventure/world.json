@@ -19,7 +19,7 @@
     {
       "id": 2,
       "name": "Abandoned Guardroom",
-      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A faded flyer on the wall advertises DEFCON 33. A rainbow sticker invites you to QueerCon mixers 16:00-18:00 at Chillout 2.",
+      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A poster lists HOPE 16's talks on privacy, activism, and DIY tech. A hand-drawn map points toward late-night villages and workshops.",
       "exits": {
         "south": 8,
         "west": 1,
@@ -27,7 +27,7 @@
       },
       "items": [
         "key",
-        "queercon_flyer"
+        "hope_schedule"
       ],
       "state": {
         "lit": true,
@@ -71,7 +71,7 @@
     {
       "id": 5,
       "name": "Scribe's Library",
-      "desc": "Towering shelves sag under the weight of moldy tomes; parchment scraps drift like leaves.",
+      "desc": "Towering shelves sag under the weight of moldy tomes; parchment scraps drift like leaves. An old HOPE badge glints from under a stack of zines.",
       "exits": {
         "south": 11,
         "west": 4,
@@ -79,7 +79,7 @@
       },
       "items": [
         "scroll",
-        "defcon_badge"
+        "hope_badge"
       ],
       "state": {
         "lit": true,
@@ -528,16 +528,16 @@
       "desc": "A sturdy length of rope - looks reliable.",
       "can_carry": true
     },
-    "defcon_badge": {
-      "name": "defcon_badge",
+    "hope_badge": {
+      "name": "hope_badge",
       "weight": 1,
-      "desc": "A shiny lanyard from DEFCON 33 that hums with hacker energy.",
+      "desc": "A worn lanyard from HOPE 16 buzzing with DIY energy.",
       "can_carry": true
     },
-    "queercon_flyer": {
-      "name": "queercon_flyer",
+    "hope_schedule": {
+      "name": "hope_schedule",
       "weight": 1,
-      "desc": "A vibrant QueerCon flyer inviting all to mixers and panels. Mixers run Thu-Sat 16:00-18:00 at Chillout 2. Everyone is welcome.",
+      "desc": "A pocket schedule listing HOPE talks, workshops, and late-night villages.",
       "can_carry": true
     },
     "ancient_crown": {
