@@ -3,16 +3,13 @@ import re
 MAX_TEXT_LEN = 1024
 MAX_LOC_LEN = 256
 
-_CONTROL_CHARS_RE = re.compile(r"[\x00-\x1f\x7f]")
+# Allow newline and carriage return, escape other control characters
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x09\x0b-\x0c\x0e-\x1f\x7f]")
 _PLACEHOLDER_RE = re.compile(r"\s*\[[A-Z_]+\]\s*")
 
 
 def _escape_control(match: re.Match) -> str:
     c = match.group(0)
-    if c == "\n":
-        return "\\n"
-    if c == "\r":
-        return "\\r"
     return f"\\x{ord(c):02x}"
 
 
