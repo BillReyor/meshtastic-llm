@@ -181,19 +181,34 @@ def is_safe_prompt(text: str) -> bool:
 
 
 def split_into_chunks(text: str, size: int):
-    while text:
-        if len(text.encode("utf-8")) <= size:
-            yield text
+    """Yield ``text`` in pieces no larger than ``size`` bytes.
+
+    This implementation works on the UTF-8 encoded representation directly to
+    avoid repeatedly encoding substrings during splitting.  It attempts to break
+    on whitespace or newline boundaries and falls back to a hard split if no
+    suitable separator is found within the limit.
+    """
+
+    data = text.encode("utf-8")
+    while data:
+        if len(data) <= size:
+            yield data.decode("utf-8")
             break
+
         end = size
-        while len(text[:end].encode("utf-8")) > size:
+        # ensure we don't split in the middle of a multibyte sequence
+        while end > 0 and data[end - 1] & 0xC0 == 0x80:
             end -= 1
-        split_point = max(text.rfind(sep, 0, end) for sep in ("\n", " "))
+
+        slice_ = data[:end]
+        split_point = max(slice_.rfind(b"\n"), slice_.rfind(b" "))
         if split_point <= 0:
             split_point = end
-        chunk = text[:split_point].rstrip()
+        chunk = data[:split_point].decode("utf-8").rstrip()
         yield chunk
-        text = text[split_point:].lstrip()
+        data = data[split_point:]
+        while data.startswith((b"\n", b" ")):
+            data = data[1:]
 
 
 def send_chunked_text(
