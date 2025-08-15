@@ -23,7 +23,7 @@ from meshtastic.serial_interface import SerialInterface
 from weather import get_weather
 from bbs import handle_bbs, bbs_posts
 from zork import handle_zork
-from utils.text import MAX_TEXT_LEN, MAX_LOC_LEN, safe_text
+from utils.text import MAX_TEXT_LEN, MAX_LOC_LEN, safe_text, strip_llm_artifacts
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -418,6 +418,7 @@ def handle_message(
     finally:
         del payload
 
+    reply = strip_llm_artifacts(reply)
     reply = safe_text(reply, MAX_TEXT_LEN)
     record_message(target, "assistant", reply)
     log_message("OUT", target, reply, channel=is_channel)

@@ -11,7 +11,7 @@ atexit.register(lambda: shutil.rmtree(BBS_DIR, ignore_errors=True))
 
 import unittest
 
-from utils.text import safe_text
+from utils.text import safe_text, strip_llm_artifacts
 
 
 class SafeTextTests(unittest.TestCase):
@@ -23,6 +23,15 @@ class SafeTextTests(unittest.TestCase):
     def test_strips_placeholders(self):
         raw = "Hey, [USERNAME]! [USER_DATA]"
         self.assertEqual(safe_text(raw), "Hey, !")
+
+
+class StripLLMArtifactsTests(unittest.TestCase):
+    def test_removes_response_artifact(self):
+        raw = "Answer\n### Response:\nextra"
+        self.assertEqual(strip_llm_artifacts(raw), "Answer")
+
+    def test_handles_no_artifact(self):
+        self.assertEqual(strip_llm_artifacts("Just text"), "Just text")
 
 
 if __name__ == "__main__":
