@@ -58,3 +58,20 @@ def test_on_receive_debug_redacts_sensitive(monkeypatch, caplog):
     assert "bar" not in logs
     assert "secret" not in logs
     assert "[REDACTED]" in logs
+
+
+def test_on_receive_logs_exception(monkeypatch, caplog):
+    monkeypatch.setattr(bot, "respond_channels", {0})
+    monkeypatch.setattr(bot, "is_addressed", lambda *a, **k: True)
+    monkeypatch.setattr(bot, "mark_addressed", lambda *a, **k: None)
+
+    def boom(*a, **k):
+        raise RuntimeError("boom")
+
+    monkeypatch.setattr(bot, "log_message", boom)
+
+    packet = {"decoded": {"text": "hi"}, "channel": 0, "to": 1, "from": 2}
+    caplog.set_level(logging.ERROR, logger="meshtastic_llm_bot")
+    bot.on_receive(packet=packet, interface=DummyIface())
+    assert "Error in on_receive" in caplog.text
+    assert "Traceback (most recent call last)" in caplog.text
