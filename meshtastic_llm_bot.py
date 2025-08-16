@@ -90,6 +90,8 @@ API_BASE = os.getenv("MESHTASTIC_API_BASE", "http://localhost:1234/v1")
 
 API_KEY = os.getenv("MESHTASTIC_API_KEY")
 
+ALLOW_NO_API_KEY = os.getenv("MESHTASTIC_ALLOW_NO_API_KEY", "").lower() in {"1", "true"}
+
 MODEL_NAME = os.getenv(
     "MESHTASTIC_MODEL_NAME", "mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF"
 )
@@ -121,6 +123,14 @@ MENU = (
     "- anything else: chat with the language model"
 )
 DEFAULT_LOCATION = "San Francisco"
+
+def check_api_key() -> None:
+    if not API_KEY and not ALLOW_NO_API_KEY:
+        print(
+            "MESHTASTIC_API_KEY is required. Set it or allow missing for testing via MESHTASTIC_ALLOW_NO_API_KEY=1.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 soul = load_soul()
 SOUL_NAME = soul["name"]
@@ -449,10 +459,11 @@ def handle_message(
         "temperature": 0.7,
         "max_tokens": 300,
     }
+    headers = {"Authorization": f"Bearer {API_KEY}"} if API_KEY else None
     try:
         r = requests.post(
             f"{API_BASE}/chat/completions",
-            headers={"Authorization": f"Bearer {API_KEY}"},
+            headers=headers,
             json=payload,
             timeout=60,
             verify=True,
@@ -576,7 +587,7 @@ def reminder_loop(iface: SerialInterface) -> None:
 
 def main():
     global respond_channels
-
+    check_api_key()
     token_env = os.getenv("CIPHER_CLI_TOKEN")
     if token_env:
         user_token = getpass.getpass("CLI auth token: ")
