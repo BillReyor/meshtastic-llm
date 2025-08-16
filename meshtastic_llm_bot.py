@@ -118,10 +118,14 @@ SOUL_NAME = soul["name"]
 HANDLE = soul.get("handle", SOUL_NAME.lower())
 SYSTEM_PROMPT = soul["system_prompt"]
 HELLO_MESSAGES = soul.get("hello_messages", [f"{SOUL_NAME} here."])
+BOOT_MENU = (
+    "Commands: weather, bbs, zork, chat.\n"
+    f"Use '{HANDLE} help' for a full list."
+)
 BOOT_MESSAGE = soul.get(
     "boot_message",
     f"DM me or say '{HANDLE}' if you expect a reply. I remember the thread for about two minutes.\n",
-) + MENU
+) + BOOT_MENU
 HANDLE_RE = re.compile(rf"\b{re.escape(HANDLE)}\b", re.IGNORECASE)
 
 GREET_INTERVAL = 4 * 3600
@@ -609,6 +613,9 @@ def main():
             send_chunked_text(hello, ch, iface, channel=True)
             log_message("OUT", ch, BOOT_MESSAGE, channel=True)
             send_chunked_text(BOOT_MESSAGE, ch, iface, channel=True)
+            reminder = safe_text(EVENT_REMINDER, MAX_TEXT_LEN)
+            log_message("OUT", ch, reminder, channel=True)
+            send_chunked_text(reminder, ch, iface, channel=True)
     threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
     threading.Thread(target=reminder_loop, args=(iface,), daemon=True).start()
 
