@@ -24,6 +24,7 @@ from weather import get_weather
 from bbs import handle_bbs, bbs_posts
 from zork import handle_zork
 from utils.text import MAX_TEXT_LEN, MAX_LOC_LEN, safe_text, strip_llm_artifacts
+from utils import redact_sensitive
 
 LOG_DIR = "logs"
 os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
@@ -188,7 +189,7 @@ executor = BoundedExecutor(MAX_WORKERS, MAX_QUEUE_SIZE)
 respond_channels: set[int] = set()
 
 def log_message(direction: str, target: int, message: str, channel: bool = False):
-    message = safe_text(message, MAX_TEXT_LEN)
+    message = redact_sensitive(safe_text(message, MAX_TEXT_LEN))
     date_str = datetime.date.today().isoformat()
     logfile = os.path.join(LOG_DIR, f"{date_str}.log")
     with open(logfile, "a", encoding="utf-8") as f:
@@ -508,7 +509,7 @@ def on_receive(
             channel,
             to,
             pkt.get("from"),
-            text,
+            redact_sensitive(text),
         )
         if not text:
             logger.debug("no text; ignoring packet")
