@@ -24,21 +24,21 @@ class SaveBoardFailureTests(unittest.TestCase):
 
     def test_json_dump_failure_removes_temp_and_logs(self):
         with patch("bbs.json.dump", side_effect=OSError("fail")):
-            with self.assertLogs("bbs", level="ERROR") as cm:
+            with self.assertLogs("meshtastic_llm_bot", level="ERROR") as cm:
                 bbs._save_board(1, ["post"])
             self.assertTrue(any("Failed to write board" in m for m in cm.output))
         self.assertEqual(os.listdir(BBS_DIR), [])
 
     def test_replace_failure_removes_temp_and_logs(self):
         with patch("bbs.os.replace", side_effect=OSError("fail")):
-            with self.assertLogs("bbs", level="ERROR") as cm:
+            with self.assertLogs("meshtastic_llm_bot", level="ERROR") as cm:
                 bbs._save_board(1, ["post"])
             self.assertTrue(any("Failed to replace" in m for m in cm.output))
         self.assertEqual(os.listdir(BBS_DIR), [])
 
     def test_chmod_failure_logs(self):
         with patch("bbs.os.chmod", side_effect=OSError("fail")):
-            with self.assertLogs("bbs", level="ERROR") as cm:
+            with self.assertLogs("meshtastic_llm_bot", level="ERROR") as cm:
                 bbs._save_board(1, ["post"])
             self.assertTrue(any("Failed to chmod" in m for m in cm.output))
         board_path = os.path.join(BBS_DIR, "1.json")
