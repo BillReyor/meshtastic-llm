@@ -69,8 +69,8 @@ class StateTests(unittest.TestCase):
         channel = 0
         self.assertTrue(bot.is_addressed("zork start", False, channel, peer))
 
-    def test_boot_message_includes_menu(self):
-        self.assertIn(bot.MENU, bot.BOOT_MESSAGE)
+    def test_boot_message_mentions_help(self):
+        self.assertIn(f"{bot.HANDLE} help", bot.BOOT_MESSAGE)
 
     def test_zork_usage_mentions_prefix(self):
         outputs = []
