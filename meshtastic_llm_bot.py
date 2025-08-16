@@ -127,7 +127,7 @@ HANDLE_RE = re.compile(rf"\b{re.escape(HANDLE)}\b", re.IGNORECASE)
 GREET_INTERVAL = 4 * 3600
 GREET_JITTER = 900
 
-REMINDER_INTERVAL = 2 * 3600
+REMINDER_INTERVAL = 1 * 3600
 REMINDER_JITTER = 900
 EVENT_REMINDER = (
     "Reminder for tonight - EmeraldCon 2025\n"
