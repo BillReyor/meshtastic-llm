@@ -7,7 +7,7 @@ from typing import Dict, List
 
 from utils.text import MAX_TEXT_LEN, safe_text
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("meshtastic_llm_bot")
 BBS_DIR = os.path.abspath(os.getenv("MESHTASTIC_BBS_DIR", "bbs_data"))
 os.makedirs(BBS_DIR, exist_ok=True, mode=0o700)
 try:

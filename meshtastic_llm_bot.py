@@ -32,7 +32,7 @@ os.makedirs(LOG_DIR, exist_ok=True, mode=0o700)
 _date_str = datetime.date.today().isoformat()
 _debug_logfile = os.path.join(LOG_DIR, f"{_date_str}-debug.log")
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s %(levelname)s %(message)s",
     handlers=[
         logging.FileHandler(_debug_logfile, encoding="utf-8"),
@@ -44,7 +44,15 @@ try:
 except OSError:
     pass
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("meshtastic_llm_bot")
+logger.propagate = False
+for handler in logging.getLogger().handlers:
+    logger.addHandler(handler)
+
+if os.getenv("MESHTASTIC_DEBUG"):
+    logger.setLevel(logging.DEBUG)
+else:
+    logger.setLevel(logging.INFO)
 
 SOULS_DIR = Path("souls")
 
