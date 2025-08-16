@@ -550,8 +550,8 @@ def on_receive(
         log_message("IN", target, text, channel=not is_dm)
         if executor.submit(handle_message, target, text, iface, not is_dm, src) is None:
             logger.warning("Dropping message for target %s due to full queue", target)
-    except Exception as e:
-        logger.warning("Error in on_receive: %s", e)
+    except Exception:
+        logger.exception("Error in on_receive")
 
 
 def greeting_loop(iface: SerialInterface) -> None:
