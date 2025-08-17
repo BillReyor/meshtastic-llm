@@ -154,14 +154,14 @@ REMINDER_INTERVAL = 1 * 3600
 REMINDER_JITTER = 900
 EVENT_REMINDER = (
     "Reminder for tonight - EmeraldCon 2025\n"
-    "The Unofficial HOPE Afterparty\n\n"
+    "The Unofficial Mesh Afterparty\n\n"
     "Celebrating our third year!\n\n"
     "Event Dates\n\n"
     "August 15–17, 2025\n"
-    "Coincides with HOPE_16 at St. John's University, Queens, NY\n\n"
+    "Coincides with the Mesh Summit at St. John's University, Queens, NY\n\n"
     "Venue\n\n"
     "The Emerald Pub\n"
-    "A classic dive bar next to the conference hotel. It's the unofficial HOPE hangout with an authentic Irish pub feel.\n\n"
+    "A classic dive bar next to the conference hotel. It's the unofficial hangout with an authentic Irish pub feel.\n\n"
     "Address: 183-01 Horace Harding Expy, Star Cafe, Queens, NY 11365\n"
     "Hours: Opens at 8PM going until 3am\n"
     "Who Should Attend\n\n"

@@ -21,7 +21,6 @@ COMMANDS_HELP = (
     "- 'zork save' or 'zork restore' to save or load\n"
     "- 'zork score' or 'zork moves' to check score or moves\n"
     "- 'zork verbose' to toggle detailed descriptions\n"
-    "- 'zork hope' to learn about HOPE\n"
     "- 'zork quit' to end the game"
 )
 

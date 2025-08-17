@@ -234,14 +234,6 @@ class StateTests(unittest.TestCase):
         self.assertNotIn("\r", outputs[0])
         self.assertEqual(len(outputs[0]), bot.MAX_TEXT_LEN)
 
-    def test_hope_easter_egg(self):
-        game = zork.Game()
-        buf = io.StringIO()
-        with redirect_stdout(buf):
-            game.do_hope()
-        out = buf.getvalue().lower()
-        self.assertIn("hackers on planet earth", out)
-        self.assertIn("workshops", out)
 
 if __name__ == "__main__":
     unittest.main()
