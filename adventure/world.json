@@ -19,15 +19,14 @@
     {
       "id": 2,
       "name": "Abandoned Guardroom",
-      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A poster lists HOPE 16's talks on privacy, activism, and DIY tech. A hand-drawn map points toward late-night villages and workshops.",
+      "desc": "Rusted spears litter the floor and torn banners hang limply from iron rings. A poster lists conference talks on privacy, activism, and DIY tech. A hand-drawn map points toward late-night villages and workshops.",
       "exits": {
         "south": 8,
         "west": 1,
         "east": 3
       },
       "items": [
-        "key",
-        "hope_schedule"
+        "key"
       ],
       "state": {
         "lit": true,
@@ -71,15 +70,14 @@
     {
       "id": 5,
       "name": "Scribe's Library",
-      "desc": "Towering shelves sag under the weight of moldy tomes; parchment scraps drift like leaves. An old HOPE badge glints from under a stack of zines.",
+      "desc": "Towering shelves sag under the weight of moldy tomes; parchment scraps drift like leaves. An old brass badge glints from under a stack of zines.",
       "exits": {
         "south": 11,
         "west": 4,
         "east": 6
       },
       "items": [
-        "scroll",
-        "hope_badge"
+        "scroll"
       ],
       "state": {
         "lit": true,
@@ -526,18 +524,6 @@
       "name": "rope",
       "weight": 3,
       "desc": "A sturdy length of rope - looks reliable.",
-      "can_carry": true
-    },
-    "hope_badge": {
-      "name": "hope_badge",
-      "weight": 1,
-      "desc": "A worn lanyard from HOPE 16 buzzing with DIY energy.",
-      "can_carry": true
-    },
-    "hope_schedule": {
-      "name": "hope_schedule",
-      "weight": 1,
-      "desc": "A pocket schedule listing HOPE talks, workshops, and late-night villages.",
       "can_carry": true
     },
     "ancient_crown": {

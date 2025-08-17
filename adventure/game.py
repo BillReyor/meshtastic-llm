@@ -84,8 +84,6 @@ class Game:
             ("key", "door"): self.unlock_door,
             ("lockpick", "door"): self.unlock_door,
             ("scroll", ""): self._use_scroll,
-            ("hope_badge", ""): self._use_hope_badge,
-            ("hope_schedule", ""): self._use_hope_schedule,
         }
 
     def current_room(self) -> Room:
@@ -197,18 +195,6 @@ class Game:
         print("The scroll reveals a secret: score +5!")
         self.score += 5
 
-    def _use_hope_badge(self):
-        print(
-            "You flash your HOPE 16 badge. A volunteer hands you a zine on lock-picking. Score +16!"
-        )
-        self.score += 16
-
-    def _use_hope_schedule(self):
-        print(
-            "The schedule lists talks, workshops, and villages running day and night. Score +5!"
-        )
-        self.score += 5
-
     def unlock_door(self):
         if not self.locked_doors.get(10, {}).get("east"):
             print("The door is already unlocked.")
@@ -248,9 +234,6 @@ class Game:
     def do_verbose(self, *_):
         self.verbose = not self.verbose
         print("Verbose" if self.verbose else "Brief")
-
-    def do_hope(self, *_):
-        print("HOPE (Hackers On Planet Earth) is an annual hacker con blending tech, activism, and art. Workshops, villages, and performances run day and night. Everyone is welcome!")
 
     def unknown(self, verb, *_):
         print(f"I don't know the word '{verb}'; try LOOK or EXAMINE")

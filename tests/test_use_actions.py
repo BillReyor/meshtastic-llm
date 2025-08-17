@@ -36,18 +36,6 @@ class UseActionTests(unittest.TestCase):
         self.assertEqual(g.score, 5)
         self.assertIn("score +5", out.lower())
 
-    def test_use_hope_badge(self):
-        g = Game()
-        out = self.capture(g.do_use, "hope_badge", "")
-        self.assertEqual(g.score, 16)
-        self.assertIn("score +16", out.lower())
-
-    def test_use_hope_schedule(self):
-        g = Game()
-        out = self.capture(g.do_use, "hope_schedule", "")
-        self.assertEqual(g.score, 5)
-        self.assertIn("score +5", out.lower())
-
     def test_use_unknown_item(self):
         g = Game()
         out = self.capture(g.do_use, "unknown", "")
