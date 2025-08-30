@@ -2,7 +2,7 @@ import os, sys, types, tempfile, shutil, atexit, io
 from contextlib import redirect_stdout
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 os.environ.setdefault("MESHTASTIC_API_KEY", "test")
-os.environ.setdefault("MESHTASTIC_SOUL", "cipher")
+os.environ["MESHTASTIC_SOUL"] = "cipher"
 BBS_DIR = tempfile.mkdtemp(prefix="bbs-test-")
 os.environ["MESHTASTIC_BBS_DIR"] = BBS_DIR
 atexit.register(lambda: shutil.rmtree(BBS_DIR, ignore_errors=True))
@@ -20,6 +20,7 @@ pubsub_stub = types.ModuleType("pubsub")
 pubsub_stub.pub = types.SimpleNamespace(subscribe=lambda *a, **k: None)
 sys.modules["pubsub"] = pubsub_stub
 
+sys.modules.pop("meshtastic_llm_bot", None)
 import unittest
 import meshtastic_llm_bot as bot
 import zork
