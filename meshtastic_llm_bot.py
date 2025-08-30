@@ -608,17 +608,17 @@ def reminder_loop(iface: SerialInterface) -> None:
 def main():
     global respond_channels
     check_api_key()
-    token_env = os.getenv("CIPHER_CLI_TOKEN")
+    token_env = os.getenv("BOT_CLI_TOKEN")
     if token_env:
         user_token = getpass.getpass("CLI auth token: ")
         if not hmac.compare_digest(user_token, token_env):
             print("Invalid auth token.")
             return
 
-    selection_env = os.getenv("CIPHER_CHANNELS")
+    selection_env = os.getenv("BOT_CHANNELS")
     if selection_env is None:
         selection = input("Respond on channel 0, 1, 2, 3, 4, or 'all'? ").strip().lower()
-        os.environ["CIPHER_CHANNELS"] = selection
+        os.environ["BOT_CHANNELS"] = selection
     else:
         selection = selection_env.strip().lower()
     if selection == "all":
@@ -642,9 +642,9 @@ def main():
     pub.subscribe(on_receive, "meshtastic.receive.text")
     if respond_channels:
         chs = ", ".join(str(c) for c in sorted(respond_channels))
-        print(f"Meshtastic ↔️ Cipher ready. DMs or channel(s) {chs}")
+        print(f"Meshtastic ↔️ {SOUL_NAME} ready. DMs or channel(s) {chs}")
     else:
-        print("Meshtastic ↔️ Cipher ready. DMs only")
+        print(f"Meshtastic ↔️ {SOUL_NAME} ready. DMs only")
     if not NO_BOOT:
         print(BOOT_MESSAGE)
         for ch in respond_channels:
