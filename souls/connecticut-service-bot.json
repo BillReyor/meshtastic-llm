@@ -7,5 +7,9 @@
     "CT Service Bot ready.",
     "DM me for local mesh info."
   ],
-  "boot_message": "DM me for Connecticut mesh help or weather. I beacon once daily at 5am.\n"
+  "boot_message": "DM me for Connecticut mesh help or weather. I beacon once daily at 5am.\n",
+  "enable_greetings": false,
+  "enable_reminders": false,
+  "beacon_hour": 5,
+  "beacon_message": "Morning Connecticut mesh."
 }

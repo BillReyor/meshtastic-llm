@@ -145,6 +145,10 @@ BOOT_MESSAGE = soul.get(
     "boot_message",
     f"DM me or say '{HANDLE}' if you expect a reply. I remember the thread for about two minutes.\n",
 ) + BOOT_MENU
+ENABLE_GREETINGS = soul.get("enable_greetings", True)
+ENABLE_REMINDERS = soul.get("enable_reminders", True)
+BEACON_HOUR = soul.get("beacon_hour")
+BEACON_MESSAGE = soul.get("beacon_message")
 HANDLE_RE = re.compile(rf"\b{re.escape(HANDLE)}\b", re.IGNORECASE)
 
 GREET_INTERVAL = 4 * 3600
@@ -566,16 +570,32 @@ def on_receive(
 
 
 def greeting_loop(iface: SerialInterface) -> None:
-    while True:
-        delay = GREET_INTERVAL + random.uniform(-GREET_JITTER, GREET_JITTER)
-        time.sleep(max(0, delay))
-        msg = random.choice(HELLO_MESSAGES)
-        for ch in respond_channels:
-            log_message("OUT", ch, msg, channel=True)
-            send_chunked_text(msg, ch, iface, channel=True)
+    if BEACON_HOUR is not None and BEACON_MESSAGE:
+        while True:
+            now = datetime.datetime.now()
+            target = now.replace(hour=BEACON_HOUR, minute=0, second=0, microsecond=0)
+            if now >= target:
+                target += datetime.timedelta(days=1)
+            time.sleep((target - now).total_seconds())
+            msg = BEACON_MESSAGE
+            for ch in respond_channels:
+                log_message("OUT", ch, msg, channel=True)
+                send_chunked_text(msg, ch, iface, channel=True)
+    elif ENABLE_GREETINGS:
+        while True:
+            delay = GREET_INTERVAL + random.uniform(-GREET_JITTER, GREET_JITTER)
+            time.sleep(max(0, delay))
+            msg = random.choice(HELLO_MESSAGES)
+            for ch in respond_channels:
+                log_message("OUT", ch, msg, channel=True)
+                send_chunked_text(msg, ch, iface, channel=True)
+    else:
+        return
 
 
 def reminder_loop(iface: SerialInterface) -> None:
+    if not ENABLE_REMINDERS:
+        return
     while True:
         delay = REMINDER_INTERVAL + random.uniform(-REMINDER_JITTER, REMINDER_JITTER)
         time.sleep(max(0, delay))
@@ -627,17 +647,22 @@ def main():
         print("Meshtastic ↔️ Cipher ready. DMs only")
     if not NO_BOOT:
         print(BOOT_MESSAGE)
-        hello = random.choice(HELLO_MESSAGES)
         for ch in respond_channels:
-            log_message("OUT", ch, hello, channel=True)
-            send_chunked_text(hello, ch, iface, channel=True)
-            log_message("OUT", ch, BOOT_MESSAGE, channel=True)
-            send_chunked_text(BOOT_MESSAGE, ch, iface, channel=True)
-            reminder = safe_text(EVENT_REMINDER, MAX_TEXT_LEN)
-            log_message("OUT", ch, reminder, channel=True)
-            send_chunked_text(reminder, ch, iface, channel=True)
-    threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
-    threading.Thread(target=reminder_loop, args=(iface,), daemon=True).start()
+            if ENABLE_GREETINGS:
+                hello = random.choice(HELLO_MESSAGES)
+                log_message("OUT", ch, hello, channel=True)
+                send_chunked_text(hello, ch, iface, channel=True)
+            if ENABLE_GREETINGS or ENABLE_REMINDERS:
+                log_message("OUT", ch, BOOT_MESSAGE, channel=True)
+                send_chunked_text(BOOT_MESSAGE, ch, iface, channel=True)
+            if ENABLE_REMINDERS:
+                reminder = safe_text(EVENT_REMINDER, MAX_TEXT_LEN)
+                log_message("OUT", ch, reminder, channel=True)
+                send_chunked_text(reminder, ch, iface, channel=True)
+    if ENABLE_GREETINGS or (BEACON_HOUR is not None and BEACON_MESSAGE):
+        threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
+    if ENABLE_REMINDERS:
+        threading.Thread(target=reminder_loop, args=(iface,), daemon=True).start()
 
     try:
         while True:
