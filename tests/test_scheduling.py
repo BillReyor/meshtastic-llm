@@ -63,25 +63,6 @@ class StandardSchedulingTests(unittest.TestCase):
         self.assertEqual(captured["sleep"], self.bot.GREET_INTERVAL)
         self.assertEqual(captured["msg"], "hi")
 
-    def test_reminder_loop_interval(self):
-        captured = {}
-
-        def fake_sleep(sec):
-            captured["sleep"] = sec
-
-        def fake_send(msg, ch, iface, channel=False):
-            captured["msg"] = msg
-            raise RuntimeError
-
-        with patch("meshtastic_llm_bot.random.uniform", return_value=0), \
-            patch("meshtastic_llm_bot.time.sleep", side_effect=fake_sleep), \
-            patch("meshtastic_llm_bot.send_chunked_text", side_effect=fake_send), \
-            patch("meshtastic_llm_bot.safe_text", lambda x, y: x):
-            with self.assertRaises(RuntimeError):
-                self.bot.reminder_loop(object())
-
-        self.assertEqual(captured["sleep"], self.bot.REMINDER_INTERVAL)
-        self.assertEqual(captured["msg"], self.bot.EVENT_REMINDER)
 
 
 class ConnecticutSchedulingTests(unittest.TestCase):
@@ -111,12 +92,6 @@ class ConnecticutSchedulingTests(unittest.TestCase):
         self.assertEqual(mock_sleep.call_args[0][0], 3600)
         self.assertEqual(captured["msg"], self.bot.BEACON_MESSAGE)
 
-    def test_reminder_loop_disabled(self):
-        with patch("meshtastic_llm_bot.send_chunked_text") as mock_send, \
-            patch("meshtastic_llm_bot.time.sleep") as mock_sleep:
-            self.bot.reminder_loop(object())
-            mock_send.assert_not_called()
-            mock_sleep.assert_not_called()
 
 
 if __name__ == "__main__":

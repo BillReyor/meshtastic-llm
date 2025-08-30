@@ -146,7 +146,6 @@ BOOT_MESSAGE = soul.get(
     f"DM me or say '{HANDLE}' if you expect a reply. I remember the thread for about two minutes.\n",
 ) + BOOT_MENU
 ENABLE_GREETINGS = soul.get("enable_greetings", True)
-ENABLE_REMINDERS = soul.get("enable_reminders", True)
 BEACON_HOUR = soul.get("beacon_hour")
 BEACON_MESSAGE = soul.get("beacon_message")
 HANDLE_RE = re.compile(rf"\b{re.escape(HANDLE)}\b", re.IGNORECASE)
@@ -154,33 +153,6 @@ HANDLE_PREFIX_RE = re.compile(rf"^\s*{re.escape(HANDLE)}[:,]?\s*", re.IGNORECASE
 
 GREET_INTERVAL = 4 * 3600
 GREET_JITTER = 900
-
-REMINDER_INTERVAL = 1 * 3600
-REMINDER_JITTER = 900
-EVENT_REMINDER = (
-    "Reminder for tonight - EmeraldCon 2025\n"
-    "The Unofficial Mesh Afterparty\n\n"
-    "Celebrating our third year!\n\n"
-    "Event Dates\n\n"
-    "August 15–17, 2025\n"
-    "Coincides with the Mesh Summit at St. John's University, Queens, NY\n\n"
-    "Venue\n\n"
-    "The Emerald Pub\n"
-    "A classic dive bar next to the conference hotel. It's the unofficial hangout with an authentic Irish pub feel.\n\n"
-    "Address: 183-01 Horace Harding Expy, Star Cafe, Queens, NY 11365\n"
-    "Hours: Opens at 8PM going until 3am\n"
-    "Who Should Attend\n\n"
-    "Hackers & Tinkerers: Whether you're into hardware hacking, software exploits, or just love the culture, you'll find like-minded individuals here.\n"
-    "Security Professionals: From pentesters to red teamers, it's a great place to unwind and share war stories.\n"
-    "Tech Enthusiasts: If you're passionate about technology and its societal impacts, this is your crowd.\n"
-    "Creatives & Artists: The intersection of technology and art is a frequent topic of discussion.\n"
-    "Anyone Who Loves a Good Pint: If you're looking for a place to relax, network, and enjoy a drink, The Emerald is the spot.\n\n"
-    "The Emerald is conveniently located near the conference hotel. It's within walking distance, making it easy to pop in between sessions or after a long day at the conference.\n\n"
-    "How to Participate\n\n"
-    "Show Up: no registration required. Just walk in and join the fun.\n"
-    "Spread the Word: share this information with fellow attendees and encourage them to join.\n"
-    "Contribute: if you have something to share—whether it's a project, topic for discussion, or just a good story—feel free to contribute."
-)
 
 NO_BOOT = "--no-boot" in sys.argv
 
@@ -593,19 +565,6 @@ def greeting_loop(iface: SerialInterface) -> None:
     else:
         return
 
-
-def reminder_loop(iface: SerialInterface) -> None:
-    if not ENABLE_REMINDERS:
-        return
-    while True:
-        delay = REMINDER_INTERVAL + random.uniform(-REMINDER_JITTER, REMINDER_JITTER)
-        time.sleep(max(0, delay))
-        msg = safe_text(EVENT_REMINDER, MAX_TEXT_LEN)
-        for ch in respond_channels:
-            log_message("OUT", ch, msg, channel=True)
-            send_chunked_text(msg, ch, iface, channel=True)
-
-
 def main():
     global respond_channels
     check_api_key()
@@ -653,17 +612,10 @@ def main():
                 hello = random.choice(HELLO_MESSAGES)
                 log_message("OUT", ch, hello, channel=True)
                 send_chunked_text(hello, ch, iface, channel=True)
-            if ENABLE_GREETINGS or ENABLE_REMINDERS:
                 log_message("OUT", ch, BOOT_MESSAGE, channel=True)
                 send_chunked_text(BOOT_MESSAGE, ch, iface, channel=True)
-            if ENABLE_REMINDERS:
-                reminder = safe_text(EVENT_REMINDER, MAX_TEXT_LEN)
-                log_message("OUT", ch, reminder, channel=True)
-                send_chunked_text(reminder, ch, iface, channel=True)
     if ENABLE_GREETINGS or (BEACON_HOUR is not None and BEACON_MESSAGE):
         threading.Thread(target=greeting_loop, args=(iface,), daemon=True).start()
-    if ENABLE_REMINDERS:
-        threading.Thread(target=reminder_loop, args=(iface,), daemon=True).start()
 
     try:
         while True:
