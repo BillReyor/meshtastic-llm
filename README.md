@@ -64,6 +64,10 @@ The game loads a 30-room world from JSON data, supports standard adventure comma
    `MESHTASTIC_MODEL_NAME` to override the LM Studio API base URL, API key, and
    model name. They default to `http://localhost:1234/v1`, `lm-studio`, and
    `mradermacher/WizardLM-1.0-Uncensored-Llama2-13b-GGUF` respectively.
+ - Define `BOT_CLI_TOKEN` with a shared secret to require an auth token on
+   startup.
+ - Use `BOT_CHANNELS` to preselect the channel(s) (0–4 or `all`) for replies
+   without an interactive prompt.
  - Modify `CHUNK_BYTES`, `CHANNEL_CHUNK_BYTES`, or the `DELAY_MIN`/`DELAY_MAX`
    values to fit your setup or preferences.
  - `MAX_HISTORY_LEN` controls how many messages per peer are kept in memory.
