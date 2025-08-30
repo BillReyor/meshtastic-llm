@@ -403,7 +403,7 @@ def handle_message(
     """
 
     text = safe_text(text, MAX_TEXT_LEN)
-    text = re.sub(r"^\s*cipher[:,]?\s*", "", text, flags=re.IGNORECASE)
+    text = re.sub(rf"^\s*{re.escape(HANDLE)}[:,]?\s*", "", text, flags=re.IGNORECASE)
     lower = text.lower()
 
     if lower.startswith("bbs"):
