@@ -150,6 +150,7 @@ ENABLE_REMINDERS = soul.get("enable_reminders", True)
 BEACON_HOUR = soul.get("beacon_hour")
 BEACON_MESSAGE = soul.get("beacon_message")
 HANDLE_RE = re.compile(rf"\b{re.escape(HANDLE)}\b", re.IGNORECASE)
+HANDLE_PREFIX_RE = re.compile(rf"^\s*{re.escape(HANDLE)}[:,]?\s*", re.IGNORECASE)
 
 GREET_INTERVAL = 4 * 3600
 GREET_JITTER = 900
@@ -407,7 +408,7 @@ def handle_message(
     """
 
     text = safe_text(text, MAX_TEXT_LEN)
-    text = re.sub(rf"^\s*{re.escape(HANDLE)}[:,]?\s*", "", text, flags=re.IGNORECASE)
+    text = HANDLE_PREFIX_RE.sub("", text)
     lower = text.lower()
 
     if lower.startswith("bbs"):
